@@ -1,1 +1,253 @@
-
+PE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>受発注・お問い合わせフォーム</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+ 
+<header class="site-header">
+  <div class="header-inner">
+    <span class="header-logo">受発注・お問い合わせ</span>
+  </div>
+</header>
+ 
+<main class="main">
+  <div class="container">
+ 
+    <!-- ===== 送信完了画面（初期非表示） ===== -->
+    <div id="complete" class="complete-card" style="display:none">
+      <div class="complete-icon">✓</div>
+      <h2 class="complete-title">受付が完了しました</h2>
+      <p class="complete-no" id="completeNo"></p>
+      <p class="complete-desc">
+        ご入力いただいたメールアドレスに受付内容をお送りしました。<br>
+        内容を確認のうえ、担当者よりご連絡いたします。
+      </p>
+      <button class="btn btn-secondary" onclick="resetForm()">新しい問い合わせをする</button>
+    </div>
+ 
+    <!-- ===== フォーム ===== -->
+    <form id="inquiryForm" novalidate>
+ 
+      <div class="card">
+        <h2 class="card-title">ご連絡先</h2>
+ 
+        <div class="field">
+          <label for="garden_name">園名 <span class="req">必須</span></label>
+          <input type="text" id="garden_name" name="garden_name"
+                 placeholder="○○幼稚園" autocomplete="organization">
+          <p class="err" id="err_garden_name"></p>
+        </div>
+ 
+        <div class="field-row">
+          <div class="field">
+            <label for="contact_name">担当者名 <span class="req">必須</span></label>
+            <input type="text" id="contact_name" name="contact_name"
+                   placeholder="山田 花子" autocomplete="name">
+            <p class="err" id="err_contact_name"></p>
+          </div>
+          <div class="field">
+            <label for="phone">電話番号 <span class="req">必須</span></label>
+            <input type="tel" id="phone" name="phone"
+                   placeholder="048-123-4567" autocomplete="tel">
+            <p class="err" id="err_phone"></p>
+          </div>
+        </div>
+ 
+        <div class="field">
+          <label for="email">メールアドレス <span class="req">必須</span></label>
+          <input type="email" id="email" name="email"
+                 placeholder="sample@example.co.jp" autocomplete="email">
+          <p class="err" id="err_email"></p>
+        </div>
+      </div>
+ 
+      <div class="card">
+        <h2 class="card-title">お問い合わせ内容</h2>
+ 
+        <div class="field">
+          <label for="type">種別 <span class="req">必須</span></label>
+          <div class="select-wrap">
+            <select id="type" name="type" onchange="onTypeChange(this.value)">
+              <option value="通常発注">通常発注</option>
+              <option value="納期確認">納期確認</option>
+              <option value="修理依頼">修理依頼</option>
+              <option value="その他">その他</option>
+            </select>
+          </div>
+        </div>
+ 
+        <!-- 商品入力（通常発注・納期確認） -->
+        <div id="itemsSection">
+          <div class="field">
+            <label>商品情報</label>
+            <div id="itemList">
+              <div class="item-row">
+                <input type="text"   name="items[0][name]" placeholder="商品名">
+                <input type="text"   name="items[0][code]" placeholder="商品コード">
+                <input type="text"   name="items[0][qty]"  placeholder="数量">
+                <button type="button" class="btn-remove" onclick="removeItem(this)" title="削除">✕</button>
+              </div>
+            </div>
+            <button type="button" class="btn btn-ghost" onclick="addItem()">＋ 商品を追加</button>
+          </div>
+        </div>
+ 
+        <!-- 修理依頼専用エリア -->
+        <div id="repairSection" style="display:none">
+          <div class="field">
+            <label for="repair_symptom">症状・状態</label>
+            <textarea id="repair_symptom" name="repair_symptom"
+                      placeholder="例：ハンドル部分が破損しています。使用から3年ほど経過しています。"></textarea>
+          </div>
+          <div class="field">
+            <label for="repair_image">写真添付（任意）</label>
+            <div class="file-wrap">
+              <input type="file" id="repair_image" name="repair_image"
+                     accept="image/jpeg,image/png,image/gif,image/webp">
+              <p class="field-hint">JPEG / PNG / GIF / WEBP　最大 5MB</p>
+            </div>
+          </div>
+        </div>
+ 
+        <div class="field">
+          <label for="note">備考</label>
+          <textarea id="note" name="note"
+                    placeholder="ご要望・ご質問などがあればご記入ください"></textarea>
+        </div>
+      </div>
+ 
+      <div class="submit-area">
+        <p class="err" id="err_global"></p>
+        <button type="submit" class="btn btn-primary" id="submitBtn">送信する</button>
+      </div>
+ 
+    </form>
+  </div>
+</main>
+ 
+<footer class="site-footer">
+  <p>&copy; 2024 Your Company Name. All rights reserved.</p>
+</footer>
+ 
+<script>
+// ===== 種別切替 =====
+function onTypeChange(val) {
+  const items  = document.getElementById('itemsSection');
+  const repair = document.getElementById('repairSection');
+  if (val === '修理依頼' || val === 'その他') {
+    items.style.display  = 'none';
+    repair.style.display = (val === '修理依頼') ? 'block' : 'none';
+  } else {
+    items.style.display  = 'block';
+    repair.style.display = 'none';
+  }
+}
+ 
+// ===== 商品行追加 =====
+let itemCount = 1;
+function addItem() {
+  const list = document.getElementById('itemList');
+  const div  = document.createElement('div');
+  div.className = 'item-row';
+  div.innerHTML = `
+    <input type="text" name="items[${itemCount}][name]" placeholder="商品名">
+    <input type="text" name="items[${itemCount}][code]" placeholder="商品コード">
+    <input type="text" name="items[${itemCount}][qty]"  placeholder="数量">
+    <button type="button" class="btn-remove" onclick="removeItem(this)" title="削除">✕</button>
+  `;
+  list.appendChild(div);
+  itemCount++;
+}
+function removeItem(btn) {
+  const rows = document.querySelectorAll('.item-row');
+  if (rows.length <= 1) return; // 最低1行は残す
+  btn.closest('.item-row').remove();
+}
+ 
+// ===== バリデーション =====
+function clearErrors() {
+  document.querySelectorAll('.err').forEach(el => el.textContent = '');
+  document.querySelectorAll('input, select, textarea').forEach(el => el.classList.remove('is-error'));
+}
+function setError(fieldId, msg) {
+  const errEl = document.getElementById('err_' + fieldId);
+  const input = document.getElementById(fieldId);
+  if (errEl) errEl.textContent = msg;
+  if (input) input.classList.add('is-error');
+}
+ 
+// ===== 送信処理 =====
+document.getElementById('inquiryForm').addEventListener('submit', async function(e) {
+  e.preventDefault();
+  clearErrors();
+ 
+  let valid = true;
+ 
+  const garden  = document.getElementById('garden_name').value.trim();
+  const contact = document.getElementById('contact_name').value.trim();
+  const phone   = document.getElementById('phone').value.trim();
+  const email   = document.getElementById('email').value.trim();
+ 
+  if (!garden)  { setError('garden_name',  '園名を入力してください'); valid = false; }
+  if (!contact) { setError('contact_name', '担当者名を入力してください'); valid = false; }
+  if (!phone)   { setError('phone',        '電話番号を入力してください'); valid = false; }
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    setError('email', '正しいメールアドレスを入力してください');
+    valid = false;
+  }
+ 
+  if (!valid) return;
+ 
+  const btn = document.getElementById('submitBtn');
+  btn.disabled = true;
+  btn.textContent = '送信中...';
+ 
+  try {
+    const fd = new FormData(this);
+    const res = await fetch('submit.php', { method: 'POST', body: fd });
+    const data = await res.json();
+ 
+    if (data.success) {
+      document.getElementById('inquiryForm').style.display = 'none';
+      document.getElementById('completeNo').textContent =
+        '問い合わせ番号：' + data.inquiry_no;
+      document.getElementById('complete').style.display = 'block';
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else {
+      document.getElementById('err_global').textContent = data.message;
+      btn.disabled = false;
+      btn.textContent = '送信する';
+    }
+  } catch (err) {
+    document.getElementById('err_global').textContent =
+      '通信エラーが発生しました。しばらく経ってから再度お試しください。';
+    btn.disabled = false;
+    btn.textContent = '送信する';
+  }
+});
+ 
+// ===== リセット =====
+function resetForm() {
+  document.getElementById('inquiryForm').reset();
+  document.getElementById('inquiryForm').style.display = 'block';
+  document.getElementById('complete').style.display = 'none';
+  // 商品行を1行に戻す
+  const list = document.getElementById('itemList');
+  list.innerHTML = `
+    <div class="item-row">
+      <input type="text" name="items[0][name]" placeholder="商品名">
+      <input type="text" name="items[0][code]" placeholder="商品コード">
+      <input type="text" name="items[0][qty]"  placeholder="数量">
+      <button type="button" class="btn-remove" onclick="removeItem(this)" title="削除">✕</button>
+    </div>`;
+  itemCount = 1;
+  onTypeChange('通常発注');
+  clearErrors();
+}
+</script>
+</body>
+</html>
