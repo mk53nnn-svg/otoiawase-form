@@ -1,1 +1,14 @@
-
+# 設定ファイル（DB・メール情報を含むため必ずGitHub非公開）
+config.php
+ 
+# アップロード画像
+uploads/
+ 
+# OS
+.DS_Store
+Thumbs.db
+ 
+# エディタ
+.vscode/
+*.swp
+ 
