@@ -7,7 +7,6 @@ if (empty($_SESSION['admin_logged_in'])) {
     exit;
 }
 
-// DB接続
 try {
     $dsn = sprintf('mysql:host=%s;dbname=%s;charset=%s', DB_HOST, DB_NAME, DB_CHARSET);
     $pdo = new PDO($dsn, DB_USER, DB_PASS, [
@@ -18,35 +17,30 @@ try {
     die('DB接続エラー：' . $e->getMessage());
 }
 
-// 担当者リスト取得
+// 担当者リスト
 $staffs = $pdo->query('SELECT * FROM staffs ORDER BY id ASC')->fetchAll();
 $staff_map = [];
 foreach ($staffs as $s) $staff_map[$s['id']] = $s['name'];
 
 // 検索・絞り込み
-$status = $_GET['status'] ?? '';
-$type   = $_GET['type']   ?? '';
-$q      = $_GET['q']      ?? '';
-$page   = max(1, (int)($_GET['page'] ?? 1));
-$per    = 10;
+$status   = $_GET['status']   ?? '';
+$type     = $_GET['type']     ?? '';
+$q        = $_GET['q']        ?? '';
+$date_from = $_GET['date_from'] ?? '';
+$date_to   = $_GET['date_to']   ?? '';
+$page     = max(1, (int)($_GET['page'] ?? 1));
+$per      = 10;
 
 $where  = [];
 $params = [];
 
-if ($status) { $where[] = 'status = :status'; $params[':status'] = $status; }
-if ($type)   { $where[] = 'type = :type';     $params[':type']   = $type; }
-if ($q) {
-    $where[]      = '(garden_name LIKE :q OR contact_name LIKE :q OR inquiry_no LIKE :q)';
-    $params[':q'] = '%' . $q . '%';
-}
+if ($status)    { $where[] = 'status = :status'; $params[':status'] = $status; }
+if ($type)      { $where[] = 'type = :type';     $params[':type']   = $type; }
+if ($q)         { $where[] = '(garden_name LIKE :q OR contact_name LIKE :q OR inquiry_no LIKE :q)'; $params[':q'] = '%'.$q.'%'; }
+if ($date_from) { $where[] = 'DATE(created_at) >= :date_from'; $params[':date_from'] = $date_from; }
+if ($date_to)   { $where[] = 'DATE(created_at) <= :date_to';   $params[':date_to']   = $date_to; }
 
 $where_sql = $where ? ' WHERE ' . implode(' AND ', $where) : '';
-
-// 総件数
-$count_stmt = $pdo->prepare('SELECT COUNT(*) FROM inquiries' . $where_sql);
-$count_stmt->execute($params);
-$total = (int)$count_stmt->fetchColumn();
-$total_pages = (int)ceil($total / $per);
 
 // ステータス別件数
 $status_counts = [];
@@ -56,7 +50,13 @@ foreach (['未対応','確認中','対応中'] as $s) {
     $status_counts[$s] = (int)$st->fetchColumn();
 }
 
-// データ取得（ページング）
+// 総件数
+$count_stmt = $pdo->prepare('SELECT COUNT(*) FROM inquiries' . $where_sql);
+$count_stmt->execute($params);
+$total = (int)$count_stmt->fetchColumn();
+$total_pages = (int)ceil($total / $per);
+
+// データ取得
 $offset = ($page - 1) * $per;
 $sql = 'SELECT * FROM inquiries' . $where_sql . ' ORDER BY created_at DESC LIMIT :limit OFFSET :offset';
 $stmt = $pdo->prepare($sql);
@@ -69,10 +69,9 @@ $rows = $stmt->fetchAll();
 function badge(string $s): string {
     $map = ['未対応'=>'new','確認中'=>'wait','対応中'=>'progress','完了'=>'done'];
     $cls = $map[$s] ?? 'new';
-    return '<span class="badge ' . $cls . '">' . htmlspecialchars($s) . '</span>';
+    return '<span class="badge '.$cls.'">'.htmlspecialchars($s).'</span>';
 }
 
-// ページングURL生成
 function pager_url(array $get, int $page): string {
     $get['page'] = $page;
     return '?' . http_build_query($get);
@@ -88,7 +87,8 @@ function pager_url(array $get, int $page): string {
 *{margin:0;padding:0;box-sizing:border-box;font-family:'Noto Sans JP',-apple-system,sans-serif}
 body{background:#f2f5fb;color:#1a1a2e;min-height:100vh}
 header{background:#0d47a1;color:#fff;padding:0 24px;height:56px;display:flex;align-items:center;justify-content:space-between}
-header h1{font-size:17px;font-weight:700}
+.header-title{font-size:17px;font-weight:700;color:#fff;text-decoration:none}
+.header-title:hover{opacity:.85}
 .header-links{display:flex;gap:12px;align-items:center}
 .nav-link{color:rgba(255,255,255,.85);font-size:13px;text-decoration:none;padding:6px 12px;border-radius:6px}
 .nav-link:hover{background:rgba(255,255,255,.15)}
@@ -96,13 +96,14 @@ header h1{font-size:17px;font-weight:700}
 .wrap{max-width:1200px;margin:auto;padding:24px 16px}
 .search-bar{background:#fff;border-radius:10px;padding:16px 20px;box-shadow:0 2px 10px rgba(0,0,0,.06);margin-bottom:14px;display:flex;gap:10px;flex-wrap:wrap;align-items:center}
 .search-bar input,.search-bar select{padding:9px 12px;border:1.5px solid #d0d7e5;border-radius:8px;font-size:14px;font-family:inherit}
-.search-bar input{flex:1;min-width:180px}
+.search-bar input[type="text"]{flex:1;min-width:160px}
+.search-bar input[type="date"]{min-width:140px}
+.date-sep{font-size:13px;color:#555}
 .btn{background:#0d47a1;color:#fff;border:none;padding:9px 18px;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;text-decoration:none;display:inline-block}
 .btn:hover{background:#0a3580}
 .btn-reset{background:#607d8b}
 .btn-reset:hover{background:#455a64}
 .summary{display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap;align-items:center}
-.summary-total{font-size:14px;color:#555;margin-right:6px}
 .summary-badge{padding:5px 12px;border-radius:20px;font-size:13px;font-weight:700}
 .card{background:#fff;border-radius:10px;box-shadow:0 2px 10px rgba(0,0,0,.06);overflow:hidden}
 .table{width:100%;border-collapse:collapse}
@@ -122,7 +123,6 @@ header h1{font-size:17px;font-weight:700}
 .pager a,.pager span{padding:7px 13px;border-radius:7px;font-size:14px;font-weight:700;text-decoration:none;border:1.5px solid #d0d7e5;color:#0d47a1;background:#fff}
 .pager a:hover{background:#e8eef8}
 .pager .current{background:#0d47a1;color:#fff;border-color:#0d47a1}
-.pager .disabled{color:#aaa;pointer-events:none}
 @media(max-width:700px){
   .table th:nth-child(2),.table td:nth-child(2),
   .table th:nth-child(5),.table td:nth-child(5){display:none}
@@ -132,7 +132,7 @@ header h1{font-size:17px;font-weight:700}
 <body>
 
 <header>
-  <h1>管理画面 - 問い合わせ一覧</h1>
+  <a href="dashboard.php" class="header-title">管理画面 - 問い合わせ一覧</a>
   <div class="header-links">
     <a href="staff.php" class="nav-link">担当者管理</a>
     <a href="logout.php" class="nav-link logout">ログアウト</a>
@@ -155,12 +155,14 @@ header h1{font-size:17px;font-weight:700}
         <option value="<?= $t ?>" <?= $type === $t ? 'selected' : '' ?>><?= $t ?></option>
       <?php endforeach; ?>
     </select>
+    <input type="date" name="date_from" value="<?= htmlspecialchars($date_from) ?>" title="開始日">
+    <span class="date-sep">〜</span>
+    <input type="date" name="date_to" value="<?= htmlspecialchars($date_to) ?>" title="終了日">
     <button type="submit" class="btn">検索</button>
     <a href="dashboard.php" class="btn btn-reset">リセット</a>
   </form>
 
   <div class="summary">
-    <span class="summary-total">全 <?= $total ?> 件</span>
     <span class="summary-badge new">未対応 <?= $status_counts['未対応'] ?> 件</span>
     <span class="summary-badge wait">確認中 <?= $status_counts['確認中'] ?> 件</span>
     <span class="summary-badge progress">対応中 <?= $status_counts['対応中'] ?> 件</span>
@@ -189,7 +191,7 @@ header h1{font-size:17px;font-weight:700}
         <td><?= htmlspecialchars($row['type']) ?></td>
         <td><?= htmlspecialchars($row['contact_name']) ?></td>
         <td><?= badge($row['status']) ?></td>
-        <td><?= htmlspecialchars($staff_map[$row['staff_id']] ?? '未割当') ?></td>
+        <td><?= htmlspecialchars($staff_map[$row['staff_id']] ?? '') ?></td>
         <td><a href="detail.php?id=<?= $row['id'] ?>" class="detail-link">詳細 →</a></td>
       </tr>
       <?php endforeach; ?>

@@ -76,7 +76,7 @@ header h1{font-size:17px;font-weight:700}
 <header>
   <h1>担当者管理</h1>
   <div class="header-links">
-    <a href="dashboard.php" class="back">← 一覧に戻る</a>
+    <a href="dashboard.php" class="back">← ホームに戻る</a>
     <a href="logout.php" class="logout">ログアウト</a>
   </div>
 </header>
