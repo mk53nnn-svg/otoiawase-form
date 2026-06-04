@@ -7,7 +7,6 @@ if (empty($_SESSION['admin_logged_in'])) {
     exit;
 }
 
-// DB接続
 try {
     $dsn = sprintf('mysql:host=%s;dbname=%s;charset=%s', DB_HOST, DB_NAME, DB_CHARSET);
     $pdo = new PDO($dsn, DB_USER, DB_PASS, [
@@ -19,20 +18,26 @@ try {
 }
 
 $id = (int)($_GET['id'] ?? 0);
-if (!$id) {
-    header('Location: dashboard.php');
-    exit;
-}
+if (!$id) { header('Location: dashboard.php'); exit; }
+
+// 担当者リスト取得
+$staffs = $pdo->query('SELECT * FROM staffs ORDER BY id ASC')->fetchAll();
 
 // 保存処理
 $saved = false;
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $new_status = $_POST['status']     ?? '';
     $admin_memo = $_POST['admin_memo'] ?? '';
+    $staff_id   = (int)($_POST['staff_id'] ?? 0);
     $allowed    = ['未対応','確認中','対応中','完了'];
     if (in_array($new_status, $allowed, true)) {
-        $stmt = $pdo->prepare('UPDATE inquiries SET status=:status, admin_memo=:memo WHERE id=:id');
-        $stmt->execute([':status' => $new_status, ':memo' => $admin_memo, ':id' => $id]);
+        $stmt = $pdo->prepare('UPDATE inquiries SET status=:status, admin_memo=:memo, staff_id=:staff_id WHERE id=:id');
+        $stmt->execute([
+            ':status'   => $new_status,
+            ':memo'     => $admin_memo,
+            ':staff_id' => $staff_id ?: null,
+            ':id'       => $id,
+        ]);
         $saved = true;
     }
 }
@@ -41,17 +46,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 $stmt = $pdo->prepare('SELECT * FROM inquiries WHERE id = :id');
 $stmt->execute([':id' => $id]);
 $row = $stmt->fetch();
+if (!$row) { header('Location: dashboard.php'); exit; }
 
-if (!$row) {
-    header('Location: dashboard.php');
-    exit;
-}
-
-// 商品情報
 $items = [];
-if ($row['items']) {
-    $items = json_decode($row['items'], true) ?? [];
-}
+if ($row['items']) $items = json_decode($row['items'], true) ?? [];
 ?>
 <!DOCTYPE html>
 <html lang="ja">
@@ -89,10 +87,7 @@ textarea{min-height:120px;resize:vertical}
 .items-table{width:100%;border-collapse:collapse;margin-top:8px}
 .items-table th{background:#e8eef8;color:#0d47a1;font-size:13px;padding:8px 12px;text-align:left}
 .items-table td{padding:8px 12px;border-bottom:1px solid #eef0f5;font-size:14px}
-@media(max-width:600px){
-  .info-grid{grid-template-columns:1fr}
-  .card{padding:18px 16px}
-}
+@media(max-width:600px){.info-grid{grid-template-columns:1fr}.card{padding:18px 16px}}
 </style>
 </head>
 <body>
@@ -111,14 +106,13 @@ textarea{min-height:120px;resize:vertical}
     <div class="saved">✓ 保存しました</div>
   <?php endif; ?>
 
-  <!-- 基本情報 -->
   <div class="card">
     <div class="card-title">基本情報</div>
     <div class="info-grid">
       <span class="info-label">問い合わせ番号</span>
       <span class="info-value"><?= htmlspecialchars($row['inquiry_no']) ?></span>
       <span class="info-label">受付日時</span>
-      <span class="info-value"><?= htmlspecialchars(date('Y年m月d日 H:i', strtotime($row['created_at']))) ?></span>
+      <span class="info-value"><?= date('Y年m月d日 H:i', strtotime($row['created_at'])) ?></span>
       <span class="info-label">種別</span>
       <span class="info-value"><?= htmlspecialchars($row['type']) ?></span>
       <span class="info-label">ステータス</span>
@@ -126,13 +120,12 @@ textarea{min-height:120px;resize:vertical}
         <?php
         $map = ['未対応'=>'new','確認中'=>'wait','対応中'=>'progress','完了'=>'done'];
         $cls = $map[$row['status']] ?? 'new';
-        echo '<span class="badge ' . $cls . '">' . htmlspecialchars($row['status']) . '</span>';
+        echo '<span class="badge '.$cls.'">'.htmlspecialchars($row['status']).'</span>';
         ?>
       </span>
     </div>
   </div>
 
-  <!-- 取引先情報 -->
   <div class="card">
     <div class="card-title">取引先情報</div>
     <div class="info-grid">
@@ -147,10 +140,8 @@ textarea{min-height:120px;resize:vertical}
     </div>
   </div>
 
-  <!-- 内容 -->
   <div class="card">
     <div class="card-title">問い合わせ内容</div>
-
     <?php if (!empty($items)): ?>
       <table class="items-table">
         <tr><th>商品名</th><th>商品コード</th><th>数量</th></tr>
@@ -163,14 +154,12 @@ textarea{min-height:120px;resize:vertical}
         <?php endforeach; ?>
       </table>
     <?php endif; ?>
-
     <?php if ($row['repair_symptom']): ?>
       <div class="info-grid" style="margin-top:12px">
         <span class="info-label">症状・状態</span>
         <span class="info-value"><?= nl2br(htmlspecialchars($row['repair_symptom'])) ?></span>
       </div>
     <?php endif; ?>
-
     <?php if ($row['repair_image']): ?>
       <div class="info-grid" style="margin-top:12px">
         <span class="info-label">添付写真</span>
@@ -180,7 +169,6 @@ textarea{min-height:120px;resize:vertical}
         </span>
       </div>
     <?php endif; ?>
-
     <?php if ($row['note']): ?>
       <div class="info-grid" style="margin-top:12px">
         <span class="info-label">備考</span>
@@ -189,7 +177,6 @@ textarea{min-height:120px;resize:vertical}
     <?php endif; ?>
   </div>
 
-  <!-- ステータス変更・社内メモ -->
   <div class="card">
     <div class="card-title">対応管理</div>
     <form method="post">
@@ -197,6 +184,16 @@ textarea{min-height:120px;resize:vertical}
       <select name="status">
         <?php foreach (['未対応','確認中','対応中','完了'] as $s): ?>
           <option value="<?= $s ?>" <?= $row['status'] === $s ? 'selected' : '' ?>><?= $s ?></option>
+        <?php endforeach; ?>
+      </select>
+
+      <label>社内担当者</label>
+      <select name="staff_id">
+        <option value="">未割当</option>
+        <?php foreach ($staffs as $staff): ?>
+          <option value="<?= $staff['id'] ?>" <?= $row['staff_id'] == $staff['id'] ? 'selected' : '' ?>>
+            <?= htmlspecialchars($staff['name']) ?>
+          </option>
         <?php endforeach; ?>
       </select>
 
