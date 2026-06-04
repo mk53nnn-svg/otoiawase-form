@@ -134,7 +134,7 @@ header{background:#0d47a1;color:#fff;padding:0 24px;height:56px;display:flex;ali
 <header>
   <a href="dashboard.php" class="header-title">管理画面 - 問い合わせ一覧</a>
   <div class="header-links">
-    <a href="dashboard.php" class="nav-link home-btn">ホーム</a>
+    <a href="dashboard.php" class="nav-link">ホーム</a>
     <a href="staff.php" class="nav-link">担当者管理</a>
     <a href="logout.php" class="nav-link logout">ログアウト</a>
   </div>
