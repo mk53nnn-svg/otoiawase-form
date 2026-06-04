@@ -26,8 +26,7 @@ foreach ($staffs as $s) $staff_map[$s['id']] = $s['name'];
 $status   = $_GET['status']   ?? '';
 $type     = $_GET['type']     ?? '';
 $q        = $_GET['q']        ?? '';
-$date_from = $_GET['date_from'] ?? '';
-$date_to   = $_GET['date_to']   ?? '';
+$date = $_GET['date'] ?? '';
 $page     = max(1, (int)($_GET['page'] ?? 1));
 $per      = 10;
 
@@ -37,8 +36,7 @@ $params = [];
 if ($status)    { $where[] = 'status = :status'; $params[':status'] = $status; }
 if ($type)      { $where[] = 'type = :type';     $params[':type']   = $type; }
 if ($q)         { $where[] = '(garden_name LIKE :q OR contact_name LIKE :q OR inquiry_no LIKE :q)'; $params[':q'] = '%'.$q.'%'; }
-if ($date_from) { $where[] = 'DATE(created_at) >= :date_from'; $params[':date_from'] = $date_from; }
-if ($date_to)   { $where[] = 'DATE(created_at) <= :date_to';   $params[':date_to']   = $date_to; }
+if ($date) { $where[] = 'DATE(created_at) = :date'; $params[':date'] = $date; }
 
 $where_sql = $where ? ' WHERE ' . implode(' AND ', $where) : '';
 
@@ -155,9 +153,7 @@ header{background:#0d47a1;color:#fff;padding:0 24px;height:56px;display:flex;ali
         <option value="<?= $t ?>" <?= $type === $t ? 'selected' : '' ?>><?= $t ?></option>
       <?php endforeach; ?>
     </select>
-    <input type="date" name="date_from" value="<?= htmlspecialchars($date_from) ?>" title="開始日">
-    <span class="date-sep">〜</span>
-    <input type="date" name="date_to" value="<?= htmlspecialchars($date_to) ?>" title="終了日">
+    <input type="date" name="date" value="<?= htmlspecialchars($date) ?>" title="日付で絞り込み">
     <button type="submit" class="btn">検索</button>
     <a href="dashboard.php" class="btn btn-reset">リセット</a>
   </form>
