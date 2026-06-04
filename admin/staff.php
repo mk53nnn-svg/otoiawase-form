@@ -69,6 +69,8 @@ header h1{font-size:17px;font-weight:700}
 .staff-item:last-child{border-bottom:none}
 .msg{padding:10px 16px;border-radius:8px;font-size:13px;font-weight:700;margin-bottom:16px;background:#e8f5e9;color:#2e7d32}
 .empty{color:#888;font-size:14px;padding:16px 0}
+.btn-home{display:inline-block;background:#fff;color:#0d47a1;border:2px solid #0d47a1;padding:9px 20px;border-radius:8px;font-size:14px;font-weight:700;text-decoration:none;margin-bottom:18px}
+.btn-home:hover{background:#e8eef8}
 </style>
 </head>
 <body>
@@ -82,6 +84,8 @@ header h1{font-size:17px;font-weight:700}
 </header>
 
 <div class="wrap">
+
+  <a href="dashboard.php" class="btn-home">🏠 ホームに戻る</a>
 
   <?php if ($msg): ?>
     <div class="msg">✓ <?= $msg ?></div>
