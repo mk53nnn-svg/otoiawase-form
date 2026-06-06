@@ -90,8 +90,6 @@ header{background:#0d47a1;color:#fff;padding:0 24px;height:56px;display:flex;ali
 .header-links{display:flex;gap:12px;align-items:center}
 .nav-link{color:rgba(255,255,255,.85);font-size:13px;text-decoration:none;padding:6px 12px;border-radius:6px}
 .nav-link:hover{background:rgba(255,255,255,.15)}
-.home-btn{background:rgba(255,255,255,.2);font-weight:700;border:1px solid rgba(255,255,255,.5)}
-.home-btn:hover{background:rgba(255,255,255,.35)}
 .logout{border:1px solid rgba(255,255,255,.4)}
 .wrap{max-width:1200px;margin:auto;padding:24px 16px}
 .search-bar{background:#fff;border-radius:10px;padding:16px 20px;box-shadow:0 2px 10px rgba(0,0,0,.06);margin-bottom:14px;display:flex;gap:10px;flex-wrap:wrap;align-items:center}
@@ -135,7 +133,7 @@ header{background:#0d47a1;color:#fff;padding:0 24px;height:56px;display:flex;ali
 <header>
   <a href="dashboard.php" class="header-title">管理画面 - 問い合わせ一覧</a>
   <div class="header-links">
-    <a href="dashboard.php" class="nav-link home-btn">🏠 ホーム</a>
+    <a href="dashboard.php" class="nav-link">ホーム</a>
     <a href="staff.php" class="nav-link">担当者管理</a>
     <a href="logout.php" class="nav-link logout">ログアウト</a>
   </div>
