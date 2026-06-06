@@ -22,9 +22,12 @@ if (!$id) { header('Location: dashboard.php'); exit; }
  
 $staffs = $pdo->query('SELECT * FROM staffs ORDER BY id ASC')->fetchAll();
  
-$saved = isset($_GET['saved']);
+$saved      = isset($_GET['saved']);
+$mail_sent  = isset($_GET['mail_sent']);
+$mail_error = isset($_GET['mail_error']);
  
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+// ===== 対応管理 保存 =====
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'save') {
     $new_status = $_POST['status']     ?? '';
     $admin_memo = $_POST['admin_memo'] ?? '';
     $staff_id   = (int)($_POST['staff_id'] ?? 0);
@@ -42,6 +45,43 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
  
+// ===== 返信メール送信 =====
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'reply') {
+    $subject = trim($_POST['reply_subject'] ?? '');
+    $body    = trim($_POST['reply_body']    ?? '');
+ 
+    $stmt = $pdo->prepare('SELECT * FROM inquiries WHERE id = :id');
+    $stmt->execute([':id' => $id]);
+    $inquiry = $stmt->fetch();
+ 
+    if ($subject && $body && $inquiry) {
+        $to        = $inquiry['email'];
+        $from      = defined('MAIL_REPLY') ? MAIL_REPLY : MAIL_FROM;
+        $from_name = mb_encode_mimeheader(MAIL_FROM_NAME, 'UTF-8', 'B');
+        $headers   = implode("\r\n", [
+            "From: {$from_name} <{$from}>",
+            "Reply-To: {$from}",
+            "Content-Type: text/plain; charset=UTF-8",
+            "Content-Transfer-Encoding: base64",
+            "X-Mailer: PHP/" . PHP_VERSION,
+        ]);
+        $subject_enc = mb_encode_mimeheader($subject, 'UTF-8', 'B');
+        $body_enc    = chunk_split(base64_encode($body));
+        $result = mail($to, $subject_enc, $body_enc, $headers);
+ 
+        if ($result) {
+            // 送信履歴を保存
+            $log = $pdo->prepare('INSERT INTO reply_logs (inquiry_id, subject, body) VALUES (:iid, :subject, :body)');
+            $log->execute([':iid' => $id, ':subject' => $subject, ':body' => $body]);
+            header('Location: detail.php?id=' . $id . '&mail_sent=1');
+        } else {
+            header('Location: detail.php?id=' . $id . '&mail_error=1');
+        }
+        exit;
+    }
+}
+ 
+// データ取得
 $stmt = $pdo->prepare('SELECT * FROM inquiries WHERE id = :id');
 $stmt->execute([':id' => $id]);
 $row = $stmt->fetch();
@@ -49,6 +89,14 @@ if (!$row) { header('Location: dashboard.php'); exit; }
  
 $items = [];
 if ($row['items']) $items = json_decode($row['items'], true) ?? [];
+ 
+// 返信履歴取得
+$logs = $pdo->prepare('SELECT * FROM reply_logs WHERE inquiry_id = :id ORDER BY sent_at DESC');
+$logs->execute([':id' => $id]);
+$reply_logs = $logs->fetchAll();
+ 
+// デフォルト件名
+$default_subject = '【' . $row['inquiry_no'] . '】お問い合わせへのご回答';
 ?>
 <!DOCTYPE html>
 <html lang="ja">
@@ -68,7 +116,6 @@ header h1{font-size:17px;font-weight:700}
 .wrap{max-width:980px;margin:auto;padding:24px 16px}
 .card{background:#fff;border-radius:10px;padding:24px 28px;box-shadow:0 2px 10px rgba(0,0,0,.06);margin-bottom:18px}
 .card-title{font-size:16px;font-weight:700;color:#0d47a1;padding-bottom:12px;border-bottom:2px solid #e8eef8;margin-bottom:18px}
-/* 基本情報と取引先情報を横並び */
 .top-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:18px}
 @media(max-width:700px){.top-grid{grid-template-columns:1fr}}
 .top-grid .card{margin-bottom:0}
@@ -81,19 +128,28 @@ header h1{font-size:17px;font-weight:700}
 .done{background:#e8f5e9;color:#2e7d32}
 .cancelled{background:#f5f5f5;color:#757575}
 label{display:block;font-size:13px;font-weight:700;margin-bottom:6px;margin-top:16px}
-select,textarea{width:100%;padding:11px 13px;border:1.5px solid #d0d7e5;border-radius:8px;font-size:14px;font-family:inherit}
-select:focus,textarea:focus{outline:none;border-color:#1976d2;box-shadow:0 0 0 3px rgba(25,118,210,.12)}
+input[type="text"],select,textarea{width:100%;padding:11px 13px;border:1.5px solid #d0d7e5;border-radius:8px;font-size:14px;font-family:inherit}
+input[type="text"]:focus,select:focus,textarea:focus{outline:none;border-color:#1976d2;box-shadow:0 0 0 3px rgba(25,118,210,.12)}
 textarea{min-height:120px;resize:vertical}
 .btn{background:#0d47a1;color:#fff;border:none;padding:12px 28px;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;margin-top:16px}
 .btn:hover{background:#0a3580}
+.btn-green{background:#2e7d32}
+.btn-green:hover{background:#1b5e20}
 .saved{background:#e8f5e9;color:#2e7d32;padding:10px 16px;border-radius:8px;font-size:13px;font-weight:700;margin-bottom:14px}
+.mail-sent{background:#e3f2fd;color:#1565c0;padding:10px 16px;border-radius:8px;font-size:13px;font-weight:700;margin-bottom:14px}
+.mail-error{background:#ffebee;color:#c62828;padding:10px 16px;border-radius:8px;font-size:13px;font-weight:700;margin-bottom:14px}
 .items-table{width:100%;border-collapse:collapse;margin-top:8px}
 .items-table th{background:#e8eef8;color:#0d47a1;font-size:13px;padding:8px 12px;text-align:left}
 .items-table td{padding:8px 12px;border-bottom:1px solid #eef0f5;font-size:14px;vertical-align:middle}
-/* コピーボタン */
 .copy-btn{background:none;border:1.5px solid #b0bec5;color:#555;padding:3px 10px;border-radius:5px;font-size:12px;cursor:pointer;margin-left:6px;white-space:nowrap}
 .copy-btn:hover{background:#e8eef8;border-color:#0d47a1;color:#0d47a1}
 .copy-btn.copied{border-color:#2e7d32;color:#2e7d32}
+.log-item{padding:12px 0;border-bottom:1px solid #eef0f5;font-size:14px}
+.log-item:last-child{border-bottom:none}
+.log-date{font-size:12px;color:#888;margin-bottom:4px}
+.log-subject{font-weight:700;margin-bottom:4px}
+.log-body{color:#555;white-space:pre-wrap;font-size:13px;background:#f8fafc;padding:10px;border-radius:6px;margin-top:6px}
+.to-address{font-size:13px;color:#555;margin-bottom:4px}
 @media(max-width:600px){.card{padding:18px 16px}.info-grid{grid-template-columns:1fr}}
 </style>
 </head>
@@ -111,6 +167,12 @@ textarea{min-height:120px;resize:vertical}
  
   <?php if ($saved): ?>
     <div class="saved">✓ 保存しました</div>
+  <?php endif; ?>
+  <?php if ($mail_sent): ?>
+    <div class="mail-sent">✉ 返信メールを送信しました</div>
+  <?php endif; ?>
+  <?php if ($mail_error): ?>
+    <div class="mail-error">⚠ メール送信に失敗しました。設定を確認してください。</div>
   <?php endif; ?>
  
   <!-- 基本情報と取引先情報を横並び -->
@@ -156,7 +218,7 @@ textarea{min-height:120px;resize:vertical}
     <?php if (!empty($items)): ?>
       <table class="items-table">
         <tr><th>商品名</th><th>商品コード</th><th>数量</th></tr>
-        <?php foreach ($items as $i => $item): ?>
+        <?php foreach ($items as $item): ?>
         <tr>
           <td><?= htmlspecialchars($item['name'] ?? '') ?></td>
           <td>
@@ -193,10 +255,39 @@ textarea{min-height:120px;resize:vertical}
     <?php endif; ?>
   </div>
  
+  <!-- 返信メール送信 -->
+  <div class="card">
+    <div class="card-title">返信メールを送る</div>
+    <p class="to-address">送信先：<?= htmlspecialchars($row['contact_name']) ?> 様　&lt;<?= htmlspecialchars($row['email']) ?>&gt;</p>
+    <form method="post">
+      <input type="hidden" name="action" value="reply">
+      <label>件名</label>
+      <input type="text" name="reply_subject" value="<?= htmlspecialchars($default_subject) ?>" required>
+      <label>本文</label>
+      <textarea name="reply_body" style="min-height:180px" placeholder="返信内容を入力してください" required></textarea>
+      <button type="submit" class="btn btn-green">✉ 送信する</button>
+    </form>
+  </div>
+ 
+  <!-- 返信履歴 -->
+  <?php if (!empty($reply_logs)): ?>
+  <div class="card">
+    <div class="card-title">返信履歴</div>
+    <?php foreach ($reply_logs as $log): ?>
+      <div class="log-item">
+        <div class="log-date"><?= date('Y年m月d日 H:i', strtotime($log['sent_at'])) ?></div>
+        <div class="log-subject">件名：<?= htmlspecialchars($log['subject']) ?></div>
+        <div class="log-body"><?= htmlspecialchars($log['body']) ?></div>
+      </div>
+    <?php endforeach; ?>
+  </div>
+  <?php endif; ?>
+ 
   <!-- 対応管理 -->
   <div class="card">
     <div class="card-title">対応管理</div>
     <form method="post">
+      <input type="hidden" name="action" value="save">
       <label>ステータス変更</label>
       <select name="status">
         <?php foreach (['未対応','対応中','完了','キャンセル'] as $s): ?>
