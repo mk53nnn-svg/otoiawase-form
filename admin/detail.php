@@ -22,7 +22,8 @@ if (!$id) { header('Location: dashboard.php'); exit; }
  
 $staffs = $pdo->query('SELECT * FROM staffs ORDER BY id ASC')->fetchAll();
  
-$saved = false;
+$saved = isset($_GET['saved']);
+ 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $new_status = $_POST['status']     ?? '';
     $admin_memo = $_POST['admin_memo'] ?? '';
@@ -36,7 +37,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             ':staff_id' => $staff_id ?: null,
             ':id'       => $id,
         ]);
-        $saved = true;
+        header('Location: detail.php?id=' . $id . '&saved=1');
+        exit;
     }
 }
  
