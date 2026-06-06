@@ -1,12 +1,12 @@
 <?php
 session_start();
 require_once __DIR__ . '/../config.php';
-
+ 
 if (empty($_SESSION['admin_logged_in'])) {
     header('Location: index.php');
     exit;
 }
-
+ 
 try {
     $dsn = sprintf('mysql:host=%s;dbname=%s;charset=%s', DB_HOST, DB_NAME, DB_CHARSET);
     $pdo = new PDO($dsn, DB_USER, DB_PASS, [
@@ -16,12 +16,12 @@ try {
 } catch (PDOException $e) {
     die('DB接続エラー：' . $e->getMessage());
 }
-
+ 
 // 担当者リスト
 $staffs = $pdo->query('SELECT * FROM staffs ORDER BY id ASC')->fetchAll();
 $staff_map = [];
 foreach ($staffs as $s) $staff_map[$s['id']] = $s['name'];
-
+ 
 // 検索・絞り込み
 $status   = $_GET['status']   ?? '';
 $type     = $_GET['type']     ?? '';
@@ -29,31 +29,31 @@ $q        = $_GET['q']        ?? '';
 $date = $_GET['date'] ?? '';
 $page     = max(1, (int)($_GET['page'] ?? 1));
 $per      = 10;
-
+ 
 $where  = [];
 $params = [];
-
+ 
 if ($status)    { $where[] = 'status = :status'; $params[':status'] = $status; }
 if ($type)      { $where[] = 'type = :type';     $params[':type']   = $type; }
 if ($q)         { $where[] = '(garden_name LIKE :q OR contact_name LIKE :q OR inquiry_no LIKE :q)'; $params[':q'] = '%'.$q.'%'; }
 if ($date) { $where[] = 'DATE(created_at) = :date'; $params[':date'] = $date; }
-
+ 
 $where_sql = $where ? ' WHERE ' . implode(' AND ', $where) : '';
-
+ 
 // ステータス別件数
 $status_counts = [];
-foreach (['未対応','確認中','対応中'] as $s) {
+foreach (['未対応','対応中'] as $s) {
     $st = $pdo->prepare('SELECT COUNT(*) FROM inquiries WHERE status = ?');
     $st->execute([$s]);
     $status_counts[$s] = (int)$st->fetchColumn();
 }
-
+ 
 // 総件数
 $count_stmt = $pdo->prepare('SELECT COUNT(*) FROM inquiries' . $where_sql);
 $count_stmt->execute($params);
 $total = (int)$count_stmt->fetchColumn();
 $total_pages = (int)ceil($total / $per);
-
+ 
 // データ取得
 $offset = ($page - 1) * $per;
 $sql = 'SELECT * FROM inquiries' . $where_sql . ' ORDER BY created_at DESC LIMIT :limit OFFSET :offset';
@@ -63,13 +63,13 @@ $stmt->bindValue(':limit',  $per,    PDO::PARAM_INT);
 $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
 $stmt->execute();
 $rows = $stmt->fetchAll();
-
+ 
 function badge(string $s): string {
-    $map = ['未対応'=>'new','確認中'=>'wait','対応中'=>'progress','完了'=>'done'];
+    $map = ['未対応'=>'new','対応中'=>'progress','完了'=>'done','キャンセル'=>'cancelled'];
     $cls = $map[$s] ?? 'new';
     return '<span class="badge '.$cls.'">'.htmlspecialchars($s).'</span>';
 }
-
+ 
 function pager_url(array $get, int $page): string {
     $get['page'] = $page;
     return '?' . http_build_query($get);
@@ -116,6 +116,7 @@ header{background:#0d47a1;color:#fff;padding:0 24px;height:56px;display:flex;ali
 .wait{background:#f3e5f5;color:#7b1fa2}
 .progress{background:#fff8e1;color:#ef6c00}
 .done{background:#e8f5e9;color:#2e7d32}
+.cancelled{background:#f5f5f5;color:#757575}
 .detail-link{color:#0d47a1;text-decoration:none;font-weight:700}
 .detail-link:hover{text-decoration:underline}
 .empty{text-align:center;padding:40px;color:#888}
@@ -130,27 +131,26 @@ header{background:#0d47a1;color:#fff;padding:0 24px;height:56px;display:flex;ali
 </style>
 </head>
 <body>
-
+ 
 <header>
   <a href="dashboard.php" class="header-title">管理画面 - 問い合わせ一覧</a>
   <div class="header-links">
-    <a href="dashboard.php" class="nav-link">ホーム</a>
+    <a href="dashboard.php" class="nav-link home-btn">🏠 ホーム</a>
     <a href="staff.php" class="nav-link">担当者管理</a>
     <a href="logout.php" class="nav-link logout">ログアウト</a>
   </div>
 </header>
-
+ 
 <div class="wrap">
-
+ 
   <form class="search-bar" method="get">
     <input type="text" name="q" value="<?= htmlspecialchars($q) ?>" placeholder="園名・担当者・問い合わせ番号で検索">
     <select name="status">
       <option value="">すべてのステータス</option>
-      <?php foreach (['未対応','確認中','対応中','完了'] as $s): ?>
+      <?php foreach (['未対応','対応中','完了','キャンセル'] as $s): ?>
         <option value="<?= $s ?>" <?= $status === $s ? 'selected' : '' ?>><?= $s ?></option>
       <?php endforeach; ?>
     </select>
-    <select name="type">
       <option value="">すべての種別</option>
       <?php foreach (['通常発注','納期確認','修理依頼','その他'] as $t): ?>
         <option value="<?= $t ?>" <?= $type === $t ? 'selected' : '' ?>><?= $t ?></option>
@@ -160,13 +160,12 @@ header{background:#0d47a1;color:#fff;padding:0 24px;height:56px;display:flex;ali
     <button type="submit" class="btn">検索</button>
     <a href="dashboard.php" class="btn btn-reset">リセット</a>
   </form>
-
+ 
   <div class="summary">
     <span class="summary-badge new">未対応 <?= $status_counts['未対応'] ?> 件</span>
-    <span class="summary-badge wait">確認中 <?= $status_counts['確認中'] ?> 件</span>
     <span class="summary-badge progress">対応中 <?= $status_counts['対応中'] ?> 件</span>
   </div>
-
+ 
   <div class="card">
     <?php if (empty($rows)): ?>
       <p class="empty">該当する問い合わせがありません</p>
@@ -187,7 +186,7 @@ header{background:#0d47a1;color:#fff;padding:0 24px;height:56px;display:flex;ali
         <td><?= htmlspecialchars(date('m/d H:i', strtotime($row['created_at']))) ?></td>
         <td><?= htmlspecialchars($row['inquiry_no']) ?></td>
         <td><?= htmlspecialchars($row['garden_name']) ?></td>
-        <td><?= htmlspecialchars($row['type']) ?></td>
+        <td><?= htmlspecialchars($row['type']) ?><?= !empty($row['note']) ? ' 📝' : '' ?></td>
         <td><?= htmlspecialchars($row['contact_name']) ?></td>
         <td><?= badge($row['status']) ?></td>
         <td><?= htmlspecialchars($staff_map[$row['staff_id']] ?? '') ?></td>
@@ -195,7 +194,7 @@ header{background:#0d47a1;color:#fff;padding:0 24px;height:56px;display:flex;ali
       </tr>
       <?php endforeach; ?>
     </table>
-
+ 
     <?php if ($total_pages > 1): ?>
     <div class="pager">
       <?php if ($page > 1): ?>
@@ -213,10 +212,10 @@ header{background:#0d47a1;color:#fff;padding:0 24px;height:56px;display:flex;ali
       <?php endif; ?>
     </div>
     <?php endif; ?>
-
+ 
     <?php endif; ?>
   </div>
-
+ 
 </div>
 </body>
 </html>
