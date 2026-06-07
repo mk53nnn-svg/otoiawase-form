@@ -264,7 +264,20 @@ textarea{min-height:120px;resize:vertical}
       <label>件名</label>
       <input type="text" name="reply_subject" value="<?= htmlspecialchars($default_subject) ?>" required>
       <label>本文</label>
-      <textarea name="reply_body" style="min-height:180px" placeholder="返信内容を入力してください" required></textarea>
+      <textarea name="reply_body" style="min-height:180px" required>この度はお問い合わせいただきありがとうございます。
+埼玉保育教販株式会社 でございます。
+ 
+ 
+ 
+ご不明点やご質問がございましたら、このメールへの返信またはお電話にてお気軽にお問い合わせください。
+ 
+━━━━━━━━━━━━━━━━━━
+〒336-0932
+埼玉県さいたま市緑区中尾1507-1
+埼玉保育教販株式会社
+TEL：048-873-3333
+FAX：048-873-3335
+━━━━━━━━━━━━━━━━━━</textarea>
       <button type="submit" class="btn btn-green">✉ 送信する</button>
     </form>
   </div>
