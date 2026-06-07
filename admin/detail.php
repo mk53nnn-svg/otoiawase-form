@@ -81,7 +81,33 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     }
 }
  
-// データ取得
+// ===== 発注完了メール送信 =====
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'complete') {
+    $stmt = $pdo->prepare('UPDATE inquiries SET status=:status WHERE id=:id');
+    $stmt->execute([':status' => '完了', ':id' => $id]);
+ 
+    $from      = defined('MAIL_REPLY') ? MAIL_REPLY : MAIL_FROM;
+    $from_name = mb_encode_mimeheader(MAIL_FROM_NAME, 'UTF-8', 'B');
+    $headers   = implode("\r\n", [
+        "From: {$from_name} <{$from}>",
+        "Reply-To: {$from}",
+        "Content-Type: text/plain; charset=UTF-8",
+        "Content-Transfer-Encoding: base64",
+        "X-Mailer: PHP/" . PHP_VERSION,
+    ]);
+    $subject_enc = mb_encode_mimeheader($order_complete_subject, 'UTF-8', 'B');
+    $body_enc    = chunk_split(base64_encode($order_complete_body));
+    $result = mail($row['email'], $subject_enc, $body_enc, $headers);
+ 
+    if ($result) {
+        $log = $pdo->prepare('INSERT INTO reply_logs (inquiry_id, subject, body) VALUES (:iid, :subject, :body)');
+        $log->execute([':iid' => $id, ':subject' => $order_complete_subject, ':body' => $order_complete_body]);
+        header('Location: detail.php?id=' . $id . '&mail_sent=1');
+    } else {
+        header('Location: detail.php?id=' . $id . '&mail_error=1');
+    }
+    exit;
+}
 $stmt = $pdo->prepare('SELECT * FROM inquiries WHERE id = :id');
 $stmt->execute([':id' => $id]);
 $row = $stmt->fetch();
@@ -97,6 +123,29 @@ $reply_logs = $logs->fetchAll();
  
 // デフォルト件名
 $default_subject = '【' . $row['inquiry_no'] . '】お問い合わせへのご回答';
+ 
+// 備考引用テキスト
+$note_quote = '';
+if (!empty($row['note'])) {
+    $note_quote = "\n\n--- お客様からのメッセージ ---\n" . $row['note'];
+}
+ 
+// 発注完了メール本文
+$order_complete_subject = '【ご注文確認】' . $row['inquiry_no'];
+$order_complete_body = $row['contact_name'] . ' 様
+ 
+この度はご注文いただきありがとうございます。
+ご注文を承りました。通常7日～10日程度でお届けいたします。
+ 
+ご不明点がございましたらお気軽にお問い合わせください。
+ 
+━━━━━━━━━━━━━━━━━━
+〒336-0932
+埼玉県さいたま市緑区中尾1507-1
+埼玉保育教販株式会社
+TEL：048-873-3333
+FAX：048-873-3335
+━━━━━━━━━━━━━━━━━━';
 ?>
 <!DOCTYPE html>
 <html lang="ja">
@@ -277,7 +326,7 @@ textarea{min-height:120px;resize:vertical}
 埼玉保育教販株式会社
 TEL：048-873-3333
 FAX：048-873-3335
-━━━━━━━━━━━━━━━━━━</textarea>
+━━━━━━━━━━━━━━━━━━<?= htmlspecialchars($note_quote) ?></textarea>
       <button type="submit" class="btn btn-green">✉ 送信する</button>
     </form>
   </div>
@@ -323,6 +372,24 @@ FAX：048-873-3335
  
       <button type="submit" class="btn">保存する</button>
     </form>
+ 
+    <?php if ($row['type'] === '通常発注'): ?>
+    <hr style="margin:20px 0;border:none;border-top:1px solid #eef0f5">
+    <p style="font-size:13px;color:#555;margin-bottom:12px">発注完了時はこちらから完了メールを送信できます</p>
+    <div style="display:flex;gap:10px;flex-wrap:wrap">
+      <form method="post" onsubmit="return confirmComplete()">
+        <input type="hidden" name="action" value="complete">
+        <button type="submit" class="btn btn-green">✉ 発注完了メールを送信して保存</button>
+      </form>
+      <form method="post">
+        <input type="hidden" name="action" value="save">
+        <input type="hidden" name="status" value="完了">
+        <input type="hidden" name="staff_id" value="<?= $row['staff_id'] ?>">
+        <input type="hidden" name="admin_memo" value="<?= htmlspecialchars($row['admin_memo'] ?? '') ?>">
+        <button type="submit" class="btn" style="background:#607d8b">メール送信せずに完了保存</button>
+      </form>
+    </div>
+    <?php endif; ?>
   </div>
  
 </div>
@@ -337,6 +404,9 @@ function copyCode(btn, code) {
       btn.classList.remove('copied');
     }, 2000);
   });
+}
+function confirmComplete() {
+  return confirm('発注完了メールをお客様に送信します。よろしいですか？');
 }
 </script>
 </body>
