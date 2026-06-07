@@ -1,16 +1,16 @@
-PE html>
+<!DOCTYPE html>
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>受発注・お問い合わせフォーム</title>
+<title>埼玉保育教販株式会社 注文・お問い合わせフォーム</title>
 <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
  
 <header class="site-header">
   <div class="header-inner">
-    <span class="header-logo">受発注・お問い合わせ</span>
+    <span class="header-logo">埼玉保育教販株式会社　注文・お問い合わせフォーム</span>
   </div>
 </header>
  
@@ -26,7 +26,7 @@ PE html>
         ご入力いただいたメールアドレスに受付内容をお送りしました。<br>
         内容を確認のうえ、担当者よりご連絡いたします。
       </p>
-      <button class="btn btn-secondary" onclick="resetForm()">新しい問い合わせをする</button>
+      <button class="btn btn-secondary" onclick="resetForm()">ホームに戻る</button>
     </div>
  
     <!-- ===== フォーム ===== -->
@@ -235,6 +235,10 @@ function resetForm() {
   document.getElementById('inquiryForm').reset();
   document.getElementById('inquiryForm').style.display = 'block';
   document.getElementById('complete').style.display = 'none';
+  // 送信ボタンを元に戻す
+  const btn = document.getElementById('submitBtn');
+  btn.disabled = false;
+  btn.textContent = '送信する';
   // 商品行を1行に戻す
   const list = document.getElementById('itemList');
   list.innerHTML = `
@@ -247,6 +251,7 @@ function resetForm() {
   itemCount = 1;
   onTypeChange('通常発注');
   clearErrors();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 </script>
 </body>
