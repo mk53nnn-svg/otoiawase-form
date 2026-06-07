@@ -83,8 +83,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
  
 // ===== 発注完了メール送信 =====
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'complete') {
+    // データ取得
+    $stmt2 = $pdo->prepare('SELECT * FROM inquiries WHERE id = :id');
+    $stmt2->execute([':id' => $id]);
+    $row2 = $stmt2->fetch();
+ 
     $stmt = $pdo->prepare('UPDATE inquiries SET status=:status WHERE id=:id');
     $stmt->execute([':status' => '完了', ':id' => $id]);
+ 
+    $complete_subject = '【ご注文確認】' . $row2['inquiry_no'];
+    $complete_body = $row2['contact_name'] . ' 様
+ 
+この度はご注文いただきありがとうございます。
+ご注文を承りました。通常7日～10日程度でお届けいたします。
+ 
+ご不明点がございましたらお気軽にお問い合わせください。
+ 
+━━━━━━━━━━━━━━━━━━
+〒336-0932
+埼玉県さいたま市緑区中尾1507-1
+埼玉保育教販株式会社
+TEL：048-873-3333
+FAX：048-873-3335
+━━━━━━━━━━━━━━━━━━';
  
     $from      = defined('MAIL_REPLY') ? MAIL_REPLY : MAIL_FROM;
     $from_name = mb_encode_mimeheader(MAIL_FROM_NAME, 'UTF-8', 'B');
@@ -95,13 +116,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
         "Content-Transfer-Encoding: base64",
         "X-Mailer: PHP/" . PHP_VERSION,
     ]);
-    $subject_enc = mb_encode_mimeheader($order_complete_subject, 'UTF-8', 'B');
-    $body_enc    = chunk_split(base64_encode($order_complete_body));
-    $result = mail($row['email'], $subject_enc, $body_enc, $headers);
+    $subject_enc = mb_encode_mimeheader($complete_subject, 'UTF-8', 'B');
+    $body_enc    = chunk_split(base64_encode($complete_body));
+    $result = mail($row2['email'], $subject_enc, $body_enc, $headers);
  
     if ($result) {
         $log = $pdo->prepare('INSERT INTO reply_logs (inquiry_id, subject, body) VALUES (:iid, :subject, :body)');
-        $log->execute([':iid' => $id, ':subject' => $order_complete_subject, ':body' => $order_complete_body]);
+        $log->execute([':iid' => $id, ':subject' => $complete_subject, ':body' => $complete_body]);
         header('Location: detail.php?id=' . $id . '&mail_sent=1');
     } else {
         header('Location: detail.php?id=' . $id . '&mail_error=1');
@@ -370,13 +391,13 @@ FAX：048-873-3335
       <label>社内メモ</label>
       <textarea name="admin_memo" placeholder="対応内容・連絡事項などを記入"><?= htmlspecialchars($row['admin_memo'] ?? '') ?></textarea>
  
-      <button type="submit" class="btn">保存する</button>
+      <button type="submit" class="btn" id="normalSaveBtn" <?= $row['status'] === '完了' ? 'style="display:none"' : '' ?>>保存する</button>
     </form>
  
     <?php if ($row['type'] === '通常発注'): ?>
     <hr style="margin:20px 0;border:none;border-top:1px solid #eef0f5">
-    <p style="font-size:13px;color:#555;margin-bottom:12px">発注完了時はこちらから完了メールを送信できます</p>
-    <div style="display:flex;gap:10px;flex-wrap:wrap">
+    <p style="font-size:13px;color:#555;margin-bottom:12px" id="completeBtnLabel" <?= $row['status'] !== '完了' ? 'style="display:none"' : '' ?>>発注完了時はこちらから完了メールを送信できます</p>
+    <div style="display:flex;gap:10px;flex-wrap:wrap" id="completeBtns" <?= $row['status'] !== '完了' ? 'style="display:none"' : '' ?>>
       <form method="post" onsubmit="return confirmComplete()">
         <input type="hidden" name="action" value="complete">
         <button type="submit" class="btn btn-green">✉ 発注完了メールを送信して保存</button>
@@ -408,6 +429,24 @@ function copyCode(btn, code) {
 function confirmComplete() {
   return confirm('発注完了メールをお客様に送信します。よろしいですか？');
 }
+ 
+// ステータス切替でボタン表示を制御
+document.addEventListener('DOMContentLoaded', function() {
+  const statusSelect = document.querySelector('select[name="status"]');
+  if (!statusSelect) return;
+ 
+  function toggleButtons() {
+    const isComplete = statusSelect.value === '完了';
+    const normalBtn  = document.getElementById('normalSaveBtn');
+    const completeLabel = document.getElementById('completeBtnLabel');
+    const completeBtns  = document.getElementById('completeBtns');
+    if (normalBtn)      normalBtn.style.display      = isComplete ? 'none'  : '';
+    if (completeLabel)  completeLabel.style.display  = isComplete ? ''      : 'none';
+    if (completeBtns)   completeBtns.style.display   = isComplete ? 'flex'  : 'none';
+  }
+ 
+  statusSelect.addEventListener('change', toggleButtons);
+});
 </script>
 </body>
 </html>
