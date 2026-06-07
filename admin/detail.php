@@ -433,16 +433,23 @@ function confirmComplete() {
 // ステータス切替でボタン表示を制御
 document.addEventListener('DOMContentLoaded', function() {
   const statusSelect = document.querySelector('select[name="status"]');
+  const isOrderType  = <?= $row['type'] === '通常発注' ? 'true' : 'false' ?>;
   if (!statusSelect) return;
  
   function toggleButtons() {
     const isComplete = statusSelect.value === '完了';
-    const normalBtn  = document.getElementById('normalSaveBtn');
+    const normalBtn     = document.getElementById('normalSaveBtn');
     const completeLabel = document.getElementById('completeBtnLabel');
     const completeBtns  = document.getElementById('completeBtns');
-    if (normalBtn)      normalBtn.style.display      = isComplete ? 'none'  : '';
-    if (completeLabel)  completeLabel.style.display  = isComplete ? ''      : 'none';
-    if (completeBtns)   completeBtns.style.display   = isComplete ? 'flex'  : 'none';
+ 
+    if (!isOrderType) {
+      // 通常発注以外は常に保存するボタンを表示
+      if (normalBtn) normalBtn.style.display = '';
+      return;
+    }
+    if (normalBtn)     normalBtn.style.display     = isComplete ? 'none' : '';
+    if (completeLabel) completeLabel.style.display = isComplete ? ''     : 'none';
+    if (completeBtns)  completeBtns.style.display  = isComplete ? 'flex' : 'none';
   }
  
   statusSelect.addEventListener('change', toggleButtons);
