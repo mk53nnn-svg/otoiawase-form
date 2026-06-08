@@ -63,6 +63,16 @@ if (in_array($type, ['通常発注', '納期確認'])) {
     $items_json = !empty($items) ? json_encode($items, JSON_UNESCAPED_UNICODE) : null;
 }
  
+// ---------- 納期確認情報 ----------
+$delivery_order_no = null;
+$delivery_date     = null;
+$delivery_product  = null;
+if ($type === '納期確認') {
+    $delivery_order_no = h($_POST['delivery_order_no'] ?? '');
+    $delivery_date     = h($_POST['delivery_date']     ?? '');
+    $delivery_product  = h($_POST['delivery_product']  ?? '');
+}
+ 
 // ---------- 修理写真アップロード ----------
 $repair_symptom = null;
 $repair_image   = null;
@@ -123,22 +133,27 @@ try {
     $stmt = $pdo->prepare("
         INSERT INTO inquiries
             (inquiry_no, type, garden_name, contact_name, phone, email,
-             items, repair_symptom, repair_image, note)
+             items, repair_symptom, repair_image, note,
+             delivery_order_no, delivery_date, delivery_product)
         VALUES
             (:inquiry_no, :type, :garden_name, :contact_name, :phone, :email,
-             :items, :repair_symptom, :repair_image, :note)
+             :items, :repair_symptom, :repair_image, :note,
+             :delivery_order_no, :delivery_date, :delivery_product)
     ");
     $stmt->execute([
-        ':inquiry_no'      => $inquiry_no,
-        ':type'            => $type,
-        ':garden_name'     => $garden_name,
-        ':contact_name'    => $contact_name,
-        ':phone'           => $phone,
-        ':email'           => $email,
-        ':items'           => $items_json,
-        ':repair_symptom'  => $repair_symptom,
-        ':repair_image'    => $repair_image,
-        ':note'            => $note,
+        ':inquiry_no'        => $inquiry_no,
+        ':type'              => $type,
+        ':garden_name'       => $garden_name,
+        ':contact_name'      => $contact_name,
+        ':phone'             => $phone,
+        ':email'             => $email,
+        ':items'             => $items_json,
+        ':repair_symptom'    => $repair_symptom,
+        ':repair_image'      => $repair_image,
+        ':note'              => $note,
+        ':delivery_order_no' => $delivery_order_no,
+        ':delivery_date'     => $delivery_date,
+        ':delivery_product'  => $delivery_product,
     ]);
  
 } catch (PDOException $e) {
