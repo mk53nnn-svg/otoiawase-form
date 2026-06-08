@@ -1,3 +1,4 @@
+PHP
 <?php
 session_start();
 require_once __DIR__ . '/../config.php';
@@ -301,6 +302,16 @@ textarea{min-height:120px;resize:vertical}
         </tr>
         <?php endforeach; ?>
       </table>
+    <?php endif; ?>
+    <?php if ($row['type'] === '納期確認'): ?>
+      <div class="info-grid" style="margin-top:8px">
+        <span class="info-label">注文番号</span>
+        <span class="info-value"><?= htmlspecialchars($row['delivery_order_no'] ?? '－') ?></span>
+        <span class="info-label">注文日</span>
+        <span class="info-value"><?= htmlspecialchars($row['delivery_date'] ?? '－') ?></span>
+        <span class="info-label">商品名</span>
+        <span class="info-value"><?= htmlspecialchars($row['delivery_product'] ?? '－') ?></span>
+      </div>
     <?php endif; ?>
     <?php if ($row['repair_symptom']): ?>
       <div class="info-grid" style="margin-top:12px">
