@@ -1,4 +1,3 @@
-PHP
 <?php
 session_start();
 require_once __DIR__ . '/../config.php';
@@ -286,7 +285,7 @@ textarea{min-height:120px;resize:vertical}
   <!-- 問い合わせ内容 -->
   <div class="card">
     <div class="card-title">問い合わせ内容</div>
-    <?php if (!empty($items)): ?>
+    <?php if (!empty($items) && $row['type'] !== '納期確認'): ?>
       <table class="items-table">
         <tr><th>商品名</th><th>商品コード</th><th>数量</th></tr>
         <?php foreach ($items as $item): ?>
