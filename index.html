@@ -80,7 +80,7 @@
           </div>
         </div>
  
-        <!-- 商品入力（通常発注・納期確認） -->
+        <!-- 商品入力（通常発注のみ） -->
         <div id="itemsSection">
           <div class="field">
             <label>商品情報</label>
@@ -93,6 +93,27 @@
               </div>
             </div>
             <button type="button" class="btn btn-ghost" onclick="addItem()">＋ 商品を追加</button>
+          </div>
+        </div>
+ 
+        <!-- 納期確認専用エリア -->
+        <div id="deliverySection" style="display:none">
+          <div class="field">
+            <label>確認したい注文の情報（わかる範囲でご入力ください）</label>
+            <div class="delivery-grid">
+              <div>
+                <label for="delivery_order_no" style="margin-top:10px">注文番号</label>
+                <input type="text" id="delivery_order_no" name="delivery_order_no" placeholder="例：INQ-20240601-001">
+              </div>
+              <div>
+                <label for="delivery_date" style="margin-top:10px">注文日（おおよそ）</label>
+                <input type="text" id="delivery_date" name="delivery_date" placeholder="例：6月初旬、6/1など">
+              </div>
+              <div>
+                <label for="delivery_product" style="margin-top:10px">商品名</label>
+                <input type="text" id="delivery_product" name="delivery_product" placeholder="例：○○セット">
+              </div>
+            </div>
           </div>
         </div>
  
@@ -136,15 +157,15 @@
 <script>
 // ===== 種別切替 =====
 function onTypeChange(val) {
-  const items  = document.getElementById('itemsSection');
-  const repair = document.getElementById('repairSection');
-  if (val === '修理依頼' || val === 'その他') {
-    items.style.display  = 'none';
-    repair.style.display = (val === '修理依頼') ? 'block' : 'none';
-  } else {
-    items.style.display  = 'block';
-    repair.style.display = 'none';
-  }
+  const items    = document.getElementById('itemsSection');
+  const repair   = document.getElementById('repairSection');
+  const delivery = document.getElementById('deliverySection');
+  items.style.display    = 'none';
+  repair.style.display   = 'none';
+  delivery.style.display = 'none';
+  if (val === '通常発注')  items.style.display    = 'block';
+  if (val === '修理依頼')  repair.style.display   = 'block';
+  if (val === '納期確認')  delivery.style.display = 'block';
 }
  
 // ===== 商品行追加 =====
@@ -250,6 +271,11 @@ function resetForm() {
     </div>`;
   itemCount = 1;
   onTypeChange('通常発注');
+  // 納期確認欄をクリア
+  ['delivery_order_no','delivery_date','delivery_product'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
   clearErrors();
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
