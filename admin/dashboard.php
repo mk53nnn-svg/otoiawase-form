@@ -184,10 +184,10 @@ header{background:#0d47a1;color:#fff;padding:0 24px;height:56px;display:flex;ali
         <td><?= htmlspecialchars(date('m/d H:i', strtotime($row['created_at']))) ?></td>
         <td><?= htmlspecialchars($row['inquiry_no']) ?></td>
         <td><?= htmlspecialchars($row['garden_name']) ?></td>
-        <td><?= htmlspecialchars($row['type']) ?><?= !empty($row['note']) ? ' 📝' : '' ?></td>
+        <td><?= htmlspecialchars($row['type']) ?><?= !empty($row['note']) ? ' 📝' : '' ?><?= ($row['type'] === '修理依頼' && !empty($row['repair_image'])) ? ' 📷' : '' ?></td>
         <td><?= htmlspecialchars($row['contact_name']) ?></td>
         <td><?= badge($row['status']) ?></td>
-        <td><?= htmlspecialchars($staff_map[$row['staff_id']] ?? '') ?></td>
+        <td><?= htmlspecialchars($staff_map[$row['staff_id']] ?? '') ?><?= !empty($row['admin_memo']) ? ' 📝' : '' ?></td>
         <td><a href="detail.php?id=<?= $row['id'] ?>" class="detail-link">詳細 →</a></td>
       </tr>
       <?php endforeach; ?>
