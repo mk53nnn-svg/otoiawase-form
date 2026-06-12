@@ -332,13 +332,6 @@ body {
   letter-spacing: .1em;
   min-height: 10mm;
   white-space: nowrap;
-  gap: 2mm;
-}
-.total-dotted-line {
-  border-bottom: 1.5px dotted #000;
-  width: 35mm;
-  display: inline-block;
-  height: 6mm;
 }
 }
 
@@ -484,7 +477,7 @@ body {
         <span class="footer-note-text"><?= htmlspecialchars(mb_strimwidth($row['note'], 0, 60, '…')) ?></span>
       <?php endif; ?>
     </div>
-    <div class="footer-total">税込合計　<span class="total-dotted-line"></span></div>
+    <div class="footer-total">税込合計</div>
   </div>
 
 </div>
