@@ -345,10 +345,8 @@ body {
   .slip {
     border: none !important;
     margin: 0 !important;
-    padding: 3mm 4mm !important;
-    width: 200mm !important;
-    transform: scale(0.96);
-    transform-origin: top left;
+    padding: 4mm 5mm !important;
+    width: 210mm !important;
     page-break-after: avoid;
   }
   * {
