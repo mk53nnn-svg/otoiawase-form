@@ -1,12 +1,12 @@
 <?php
 session_start();
 require_once __DIR__ . '/../config.php';
- 
+
 if (empty($_SESSION['admin_logged_in'])) {
     header('Location: index.php');
     exit;
 }
- 
+
 try {
     $dsn = sprintf('mysql:host=%s;dbname=%s;charset=%s', DB_HOST, DB_NAME, DB_CHARSET);
     $pdo = new PDO($dsn, DB_USER, DB_PASS, [
@@ -16,16 +16,16 @@ try {
 } catch (PDOException $e) {
     die('DB接続エラー：' . $e->getMessage());
 }
- 
+
 $id = (int)($_GET['id'] ?? 0);
 if (!$id) { header('Location: dashboard.php'); exit; }
- 
+
 $staffs = $pdo->query('SELECT * FROM staffs ORDER BY id ASC')->fetchAll();
- 
+
 $saved      = isset($_GET['saved']);
 $mail_sent  = isset($_GET['mail_sent']);
 $mail_error = isset($_GET['mail_error']);
- 
+
 // ===== 対応管理 保存 =====
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'save') {
     $new_status = $_POST['status']     ?? '';
@@ -44,16 +44,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
         exit;
     }
 }
- 
+
 // ===== 返信メール送信 =====
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'reply') {
     $subject = trim($_POST['reply_subject'] ?? '');
     $body    = trim($_POST['reply_body']    ?? '');
- 
+
     $stmt = $pdo->prepare('SELECT * FROM inquiries WHERE id = :id');
     $stmt->execute([':id' => $id]);
     $inquiry = $stmt->fetch();
- 
+
     if ($subject && $body && $inquiry) {
         $to        = $inquiry['email'];
         $from      = defined('MAIL_REPLY') ? MAIL_REPLY : MAIL_FROM;
@@ -68,7 +68,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
         $subject_enc = mb_encode_mimeheader($subject, 'UTF-8', 'B');
         $body_enc    = chunk_split(base64_encode($body));
         $result = mail($to, $subject_enc, $body_enc, $headers);
- 
+
         if ($result) {
             // 送信履歴を保存
             $log = $pdo->prepare('INSERT INTO reply_logs (inquiry_id, subject, body) VALUES (:iid, :subject, :body)');
@@ -80,25 +80,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
         exit;
     }
 }
- 
+
 // ===== 発注完了メール送信 =====
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'complete') {
     // データ取得
     $stmt2 = $pdo->prepare('SELECT * FROM inquiries WHERE id = :id');
     $stmt2->execute([':id' => $id]);
     $row2 = $stmt2->fetch();
- 
+
     $stmt = $pdo->prepare('UPDATE inquiries SET status=:status WHERE id=:id');
     $stmt->execute([':status' => '完了', ':id' => $id]);
- 
+
     $complete_subject = '【ご注文確認】' . $row2['inquiry_no'];
     $complete_body = $row2['contact_name'] . ' 様
- 
+
 この度はご注文いただきありがとうございます。
 ご注文を承りました。通常7日～10日程度でお届けいたします。
- 
+
 ご不明点がございましたらお気軽にお問い合わせください。
- 
+
 ━━━━━━━━━━━━━━━━━━
 〒336-0932
 埼玉県さいたま市緑区中尾1507-1
@@ -106,7 +106,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
 TEL：048-873-3333
 FAX：048-873-3335
 ━━━━━━━━━━━━━━━━━━';
- 
+
     $from      = defined('MAIL_REPLY') ? MAIL_REPLY : MAIL_FROM;
     $from_name = mb_encode_mimeheader(MAIL_FROM_NAME, 'UTF-8', 'B');
     $headers   = implode("\r\n", [
@@ -119,7 +119,7 @@ FAX：048-873-3335
     $subject_enc = mb_encode_mimeheader($complete_subject, 'UTF-8', 'B');
     $body_enc    = chunk_split(base64_encode($complete_body));
     $result = mail($row2['email'], $subject_enc, $body_enc, $headers);
- 
+
     if ($result) {
         $log = $pdo->prepare('INSERT INTO reply_logs (inquiry_id, subject, body) VALUES (:iid, :subject, :body)');
         $log->execute([':iid' => $id, ':subject' => $complete_subject, ':body' => $complete_body]);
@@ -133,33 +133,33 @@ $stmt = $pdo->prepare('SELECT * FROM inquiries WHERE id = :id');
 $stmt->execute([':id' => $id]);
 $row = $stmt->fetch();
 if (!$row) { header('Location: dashboard.php'); exit; }
- 
+
 $items = [];
 if ($row['items']) $items = json_decode($row['items'], true) ?? [];
- 
+
 // 返信履歴取得
 $logs = $pdo->prepare('SELECT * FROM reply_logs WHERE inquiry_id = :id ORDER BY sent_at DESC');
 $logs->execute([':id' => $id]);
 $reply_logs = $logs->fetchAll();
- 
+
 // デフォルト件名
 $default_subject = '【' . $row['inquiry_no'] . '】お問い合わせへのご回答';
- 
+
 // 備考引用テキスト
 $note_quote = '';
 if (!empty($row['note'])) {
     $note_quote = "\n\n--- お客様からのメッセージ ---\n" . $row['note'];
 }
- 
+
 // 発注完了メール本文
 $order_complete_subject = '【ご注文確認】' . $row['inquiry_no'];
 $order_complete_body = $row['contact_name'] . ' 様
- 
+
 この度はご注文いただきありがとうございます。
 ご注文を承りました。通常7日～10日程度でお届けいたします。
- 
+
 ご不明点がございましたらお気軽にお問い合わせください。
- 
+
 ━━━━━━━━━━━━━━━━━━
 〒336-0932
 埼玉県さいたま市緑区中尾1507-1
@@ -224,17 +224,18 @@ textarea{min-height:120px;resize:vertical}
 </style>
 </head>
 <body>
- 
+
 <header>
   <h1>問い合わせ詳細</h1>
   <div class="header-links">
+    <a href="print.php?id=<?= $id ?>" class="back" target="_blank">🖨️ 伝票印刷</a>
     <a href="dashboard.php" class="back">← 一覧に戻る</a>
     <a href="logout.php" class="logout">ログアウト</a>
   </div>
 </header>
- 
+
 <div class="wrap">
- 
+
   <?php if ($saved): ?>
     <div class="saved">✓ 保存しました</div>
   <?php endif; ?>
@@ -244,7 +245,7 @@ textarea{min-height:120px;resize:vertical}
   <?php if ($mail_error): ?>
     <div class="mail-error">⚠ メール送信に失敗しました。設定を確認してください。</div>
   <?php endif; ?>
- 
+
   <!-- 基本情報と取引先情報を横並び -->
   <div class="top-grid">
     <div class="card">
@@ -266,7 +267,7 @@ textarea{min-height:120px;resize:vertical}
         </span>
       </div>
     </div>
- 
+
     <div class="card">
       <div class="card-title">取引先情報</div>
       <div class="info-grid">
@@ -281,7 +282,7 @@ textarea{min-height:120px;resize:vertical}
       </div>
     </div>
   </div>
- 
+
   <!-- 問い合わせ内容 -->
   <div class="card">
     <div class="card-title">問い合わせ内容</div>
@@ -334,7 +335,7 @@ textarea{min-height:120px;resize:vertical}
       </div>
     <?php endif; ?>
   </div>
- 
+
   <!-- 返信メール送信 -->
   <div class="card">
     <div class="card-title">返信メールを送る</div>
@@ -346,11 +347,11 @@ textarea{min-height:120px;resize:vertical}
       <label>本文</label>
       <textarea name="reply_body" style="min-height:180px" required>この度はお問い合わせいただきありがとうございます。
 埼玉保育教販株式会社 でございます。
- 
- 
- 
+
+
+
 ご不明点やご質問がございましたら、このメールへの返信またはお電話にてお気軽にお問い合わせください。
- 
+
 ━━━━━━━━━━━━━━━━━━
 〒336-0932
 埼玉県さいたま市緑区中尾1507-1
@@ -361,7 +362,7 @@ FAX：048-873-3335
       <button type="submit" class="btn btn-green">✉ 送信する</button>
     </form>
   </div>
- 
+
   <!-- 返信履歴 -->
   <?php if (!empty($reply_logs)): ?>
   <div class="card">
@@ -375,7 +376,7 @@ FAX：048-873-3335
     <?php endforeach; ?>
   </div>
   <?php endif; ?>
- 
+
   <!-- 対応管理 -->
   <div class="card">
     <div class="card-title">対応管理</div>
@@ -387,7 +388,7 @@ FAX：048-873-3335
           <option value="<?= $s ?>" <?= $row['status'] === $s ? 'selected' : '' ?>><?= $s ?></option>
         <?php endforeach; ?>
       </select>
- 
+
       <label>社内担当者</label>
       <select name="staff_id">
         <option value="">未割当</option>
@@ -397,13 +398,13 @@ FAX：048-873-3335
           </option>
         <?php endforeach; ?>
       </select>
- 
+
       <label>社内メモ</label>
       <textarea name="admin_memo" placeholder="対応内容・連絡事項などを記入"><?= htmlspecialchars($row['admin_memo'] ?? '') ?></textarea>
- 
+
       <button type="submit" class="btn" id="normalSaveBtn" <?= $row['status'] === '完了' ? 'style="display:none"' : '' ?>>保存する</button>
     </form>
- 
+
     <?php if ($row['type'] === '通常発注'): ?>
     <hr style="margin:20px 0;border:none;border-top:1px solid #eef0f5">
     <p style="font-size:13px;color:#555;margin-bottom:12px" id="completeBtnLabel" <?= $row['status'] !== '完了' ? 'style="display:none"' : '' ?>>発注完了時はこちらから完了メールを送信できます</p>
@@ -422,9 +423,9 @@ FAX：048-873-3335
     </div>
     <?php endif; ?>
   </div>
- 
+
 </div>
- 
+
 <script>
 function copyCode(btn, code) {
   navigator.clipboard.writeText(code).then(() => {
@@ -439,19 +440,19 @@ function copyCode(btn, code) {
 function confirmComplete() {
   return confirm('発注完了メールをお客様に送信します。よろしいですか？');
 }
- 
+
 // ステータス切替でボタン表示を制御
 document.addEventListener('DOMContentLoaded', function() {
   const statusSelect = document.querySelector('select[name="status"]');
   const isOrderType  = <?= $row['type'] === '通常発注' ? 'true' : 'false' ?>;
   if (!statusSelect) return;
- 
+
   function toggleButtons() {
     const isComplete = statusSelect.value === '完了';
     const normalBtn     = document.getElementById('normalSaveBtn');
     const completeLabel = document.getElementById('completeBtnLabel');
     const completeBtns  = document.getElementById('completeBtns');
- 
+
     if (!isOrderType) {
       // 通常発注以外は常に保存するボタンを表示
       if (normalBtn) normalBtn.style.display = '';
@@ -461,7 +462,7 @@ document.addEventListener('DOMContentLoaded', function() {
     if (completeLabel) completeLabel.style.display = isComplete ? ''     : 'none';
     if (completeBtns)  completeBtns.style.display  = isComplete ? 'flex' : 'none';
   }
- 
+
   statusSelect.addEventListener('change', toggleButtons);
 });
 </script>
