@@ -325,8 +325,8 @@ body {
 .footer-total {
   display: flex;
   align-items: center;
-  justify-content: center;
-  padding: 3mm 6mm;
+  justify-content: flex-start;
+  padding: 3mm 4mm;
   font-size: 13px;
   font-weight: 700;
   letter-spacing: .1em;
@@ -334,11 +334,11 @@ body {
   white-space: nowrap;
   gap: 2mm;
 }
-.total-input-box {
-  border: 1px solid #000;
-  width: 28mm;
-  height: 7mm;
+.total-dotted-line {
+  border-bottom: 1.5px dotted #000;
+  width: 35mm;
   display: inline-block;
+  height: 6mm;
 }
 }
 
@@ -484,7 +484,7 @@ body {
         <span class="footer-note-text"><?= htmlspecialchars(mb_strimwidth($row['note'], 0, 60, '…')) ?></span>
       <?php endif; ?>
     </div>
-    <div class="footer-total">税込合計　<span class="total-input-box"></span></div>
+    <div class="footer-total">税込合計　<span class="total-dotted-line"></span></div>
   </div>
 
 </div>
