@@ -357,8 +357,8 @@ body {
 </head>
 <body>
 
-<div class="print-controls">
-  <button class="btn-print" onclick="window.print()">🖨️ 印刷する</button>
+<div class="print-controls" id="printControls">
+  <button class="btn-print" onclick="doPrint()">🖨️ 印刷する</button>
   <a href="detail.php?id=<?= $id ?>" class="btn-back">← 詳細に戻る</a>
   <span class="hint">印刷ダイアログで用紙サイズ「A5」・向き「横」を選択してください</span>
 </div>
@@ -484,5 +484,14 @@ body {
   </div>
 
 </div>
+
+<script>
+function doPrint() {
+  var ctrl = document.getElementById('printControls');
+  ctrl.style.display = 'none';
+  window.print();
+  ctrl.style.display = '';
+}
+</script>
 </body>
 </html>
