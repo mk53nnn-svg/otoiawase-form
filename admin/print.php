@@ -316,7 +316,11 @@ body {
 }
 .footer-note-text {
   font-size: 10px;
-  line-height: 1.6;
+  line-height: 1.8;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 .footer-total {
   display: flex;
@@ -328,6 +332,14 @@ body {
   letter-spacing: .1em;
   min-height: 10mm;
   white-space: nowrap;
+  gap: 2mm;
+}
+.total-input-box {
+  border: 1px solid #000;
+  width: 28mm;
+  height: 7mm;
+  display: inline-block;
+}
 }
 
 @media print {
@@ -469,11 +481,10 @@ body {
   <div class="slip-footer">
     <div class="footer-note">
       <?php if (!empty($row['note'])): ?>
-        <span class="footer-note-label">備考</span>
-        <span class="footer-note-text"><?= nl2br(htmlspecialchars($row['note'])) ?></span>
+        <span class="footer-note-text"><?= htmlspecialchars(mb_strimwidth($row['note'], 0, 60, '…')) ?></span>
       <?php endif; ?>
     </div>
-    <div class="footer-total">税込合計</div>
+    <div class="footer-total">税込合計　<span class="total-input-box"></span></div>
   </div>
 
 </div>
