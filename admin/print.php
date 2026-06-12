@@ -351,6 +351,28 @@ body {
     overflow: hidden;
     page-break-after: avoid;
   }
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+  .header-right,
+  .hr-label,
+  .hr-label-r,
+  .hr-val,
+  .hr-val-r,
+  .items-area,
+  .items-table,
+  .items-table th,
+  .items-table td,
+  .slip-footer,
+  .footer-note,
+  .date-order-row,
+  .order-row,
+  .order-label,
+  .order-val,
+  .order-sub-label {
+    border-color: #000 !important;
+  }
   @page {
     size: A5 landscape;
     margin: 0;
