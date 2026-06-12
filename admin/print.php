@@ -28,15 +28,20 @@ if (!$row) { header('Location: dashboard.php'); exit; }
 $items = [];
 if ($row['items']) $items = json_decode($row['items'], true) ?? [];
 
-// 受注日
-$order_date = date('Y年m月d日', strtotime($row['created_at']));
-$order_date_short = date('n月j日', strtotime($row['created_at']));
+// 受注日を令和に変換
+function to_reiwa(string $date_str): string {
+    $ts   = strtotime($date_str);
+    $year = (int)date('Y', $ts);
+    $m    = date('n', $ts);
+    $d    = date('j', $ts);
+    $reiwa = $year - 2018;
+    return "令和{$reiwa}年{$m}月{$d}日";
+}
+$order_date_reiwa = to_reiwa($row['created_at']);
 
-// 商品を左9行・右9行に分割
+// 商品を左9行・右9行に分割、空行で埋める
 $left_items  = array_slice($items, 0, 9);
 $right_items = array_slice($items, 9, 9);
-
-// 左右それぞれ9行に満たない分を空行で埋める
 while (count($left_items)  < 9) $left_items[]  = ['name'=>'','code'=>'','qty'=>''];
 while (count($right_items) < 9) $right_items[] = ['name'=>'','code'=>'','qty'=>''];
 ?>
@@ -49,12 +54,11 @@ while (count($right_items) < 9) $right_items[] = ['name'=>'','code'=>'','qty'=>'
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
 body {
-  font-family: 'MS Mincho', 'Yu Mincho', serif;
+  font-family: 'MS Mincho', 'Yu Mincho', 'Hiragino Mincho ProN', serif;
   font-size: 11px;
-  background: #fff;
+  background: #f2f5fb;
 }
 
-/* 印刷ボタンエリア（印刷時は非表示） */
 .print-controls {
   padding: 12px 20px;
   background: #f2f5fb;
@@ -84,154 +88,184 @@ body {
   text-decoration: none;
   display: inline-block;
 }
+.hint { font-size: 13px; color: #555; }
 
 /* 伝票本体 */
 .slip {
-  width: 210mm;
-  min-height: 148mm;
-  padding: 6mm 8mm;
-  margin: 10px auto;
+  width: 206mm;
+  min-height: 144mm;
+  padding: 5mm 6mm;
+  margin: 8px auto;
   background: #fff;
-  border: 1px solid #ccc;
+  border: 1px solid #aaa;
 }
 
-/* ヘッダー部 */
+/* === ヘッダー行 === */
 .slip-header {
   display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
-  gap: 0;
+  grid-template-columns: 55mm 1fr 70mm;
+  align-items: start;
   margin-bottom: 2mm;
+}
+.garden-code-area { font-size: 10px; }
+.garden-code-label { margin-bottom: 1mm; }
+.garden-code-line {
+  border-bottom: 2px solid #000;
+  width: 44mm;
+  height: 5mm;
+  display: block;
 }
 .slip-title {
   text-align: center;
-  font-size: 18px;
+  font-size: 16px;
   font-weight: 700;
-  letter-spacing: .1em;
-  padding-top: 2mm;
+  letter-spacing: .15em;
+  padding-top: 1mm;
 }
-.header-left {
-  font-size: 11px;
-}
+/* 右上：伝票NO・受領印 */
 .header-right {
+  border: 1.5px solid #000;
   display: grid;
   grid-template-columns: 1fr 1fr;
-  border: 1px solid #000;
-  font-size: 11px;
+  font-size: 10px;
 }
-.header-right-cell {
+.hr-label {
   padding: 1mm 2mm;
-  border-right: 1px solid #000;
+  border-right: 1.5px solid #000;
+  border-bottom: 1.5px solid #000;
   font-weight: 700;
-}
-.header-right-cell:last-child { border-right: none; }
-.header-right-val {
-  padding: 1mm 2mm;
-  border-right: 1px solid #000;
-  min-height: 12mm;
-}
-.header-right-val:last-child { border-right: none; }
-
-/* 園コード */
-.garden-code {
-  font-size: 10px;
-  margin-bottom: 1mm;
-}
-.garden-code-line {
-  border-bottom: 1px solid #000;
-  width: 40mm;
-  height: 6mm;
-  display: inline-block;
-}
-
-/* 宛名エリア */
-.address-area {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  margin-bottom: 1mm;
-  gap: 0;
-}
-.address-left {
-  padding: 1mm 0;
-}
-.garden-types {
-  font-size: 10px;
-  line-height: 1.8;
   text-align: center;
+  background: #f9f9f9;
 }
-.garden-name-line {
-  font-size: 13px;
+.hr-label-r {
+  padding: 1mm 2mm;
+  border-bottom: 1.5px solid #000;
   font-weight: 700;
-  border-bottom: 1px solid #000;
-  min-width: 50mm;
-  display: inline-block;
+  text-align: center;
+  background: #f9f9f9;
+}
+.hr-val {
+  border-right: 1.5px solid #000;
+  height: 14mm;
+}
+.hr-val-r {
+  height: 14mm;
+}
+
+/* === 宛名行 === */
+.address-row {
+  display: grid;
+  grid-template-columns: 55mm 1fr 70mm;
+  align-items: end;
+  margin-bottom: 1mm;
+  border-bottom: 1.5px solid #000;
   padding-bottom: 1mm;
 }
-.sama { font-size: 13px; margin-left: 1mm; }
-
-/* 日付・受発注エリア */
-.date-order-area {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  border-top: 1px solid #000;
-  border-bottom: 1px solid #000;
-  margin-bottom: 1mm;
+.garden-name-wrap {
+  display: flex;
+  align-items: flex-end;
+  gap: 1mm;
 }
-.date-area {
-  padding: 1mm 2mm;
-  font-size: 12px;
-  letter-spacing: .2em;
-  border-right: 1px solid #000;
+.garden-name-box {
+  border: 1.5px solid #000;
+  height: 10mm;
+  width: 48mm;
   display: flex;
   align-items: center;
-  gap: 3mm;
+  padding: 0 2mm;
+  font-size: 12px;
+  font-weight: 700;
+  overflow: hidden;
+  white-space: nowrap;
 }
-.date-blank {
-  border-bottom: 1px solid #000;
-  display: inline-block;
-  width: 8mm;
-  height: 5mm;
+.sama-l { font-size: 12px; }
+.contact-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.5mm;
 }
+.contact-label { font-size: 9px; color: #333; }
+.contact-name-box {
+  border: 1.5px solid #000;
+  height: 8mm;
+  width: 32mm;
+  display: flex;
+  align-items: center;
+  padding: 0 2mm;
+  font-size: 11px;
+  font-weight: 700;
+}
+.sama-r { font-size: 12px; margin-left: 1mm; align-self: flex-end; }
+
+/* === 日付・受発注行 === */
+.date-order-row {
+  display: grid;
+  grid-template-columns: 1fr 70mm;
+  border: 1.5px solid #000;
+  margin-bottom: 0;
+}
+.date-area {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6mm;
+  font-size: 13px;
+  letter-spacing: .2em;
+  border-right: 1.5px solid #000;
+  padding: 2mm;
+}
+/* 受発注エリア */
 .order-area {
-  font-size: 10px;
+  display: grid;
+  grid-template-rows: 1fr 1fr;
 }
 .order-row {
   display: grid;
-  grid-template-columns: 12mm 1fr 20mm 20mm;
-  border-bottom: 1px solid #000;
-  align-items: center;
+  grid-template-columns: 12mm 1fr 18mm 20mm;
+  border-bottom: 1.5px solid #000;
+  min-height: 7mm;
 }
 .order-row:last-child { border-bottom: none; }
 .order-label {
-  padding: 1mm 1mm;
-  border-right: 1px solid #000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-right: 1.5px solid #000;
   font-weight: 700;
-  text-align: center;
+  font-size: 11px;
 }
 .order-val {
-  padding: 1mm 2mm;
-  border-right: 1px solid #000;
+  display: flex;
+  align-items: center;
+  padding: 0 2mm;
+  border-right: 1.5px solid #000;
+  font-size: 11px;
+  font-weight: 700;
 }
-.order-staff-label {
-  padding: 1mm 1mm;
-  border-right: 1px solid #000;
+.order-sub-label {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-right: 1.5px solid #000;
+  font-size: 10px;
   font-weight: 700;
   text-align: center;
 }
-.order-staff-val {
-  padding: 1mm 1mm;
-  min-width: 16mm;
+.order-sub-val {
+  display: flex;
+  align-items: center;
+  padding: 0 1mm;
 }
 
-/* 商品テーブル */
+/* === 商品テーブル === */
 .items-area {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 0;
-  border: 1px solid #000;
+  border: 1.5px solid #000;
+  border-top: 1.5px solid #000;
 }
-.items-col {
-  border-right: 1px solid #000;
-}
+.items-col { border-right: 1.5px solid #000; }
 .items-col:last-child { border-right: none; }
 .items-table {
   width: 100%;
@@ -239,65 +273,61 @@ body {
   font-size: 10px;
 }
 .items-table th {
-  border-bottom: 1px solid #000;
+  border-bottom: 1.5px solid #000;
   border-right: 1px solid #000;
   padding: 1mm;
   text-align: center;
   font-weight: 700;
-  letter-spacing: .1em;
-  background: #fff;
+  letter-spacing: .05em;
 }
 .items-table th:last-child { border-right: none; }
 .items-table td {
   border-bottom: 1px solid #000;
   border-right: 1px solid #000;
-  padding: 1mm 1mm;
-  height: 7mm;
+  padding: 0.5mm 1mm;
+  height: 7.5mm;
   vertical-align: middle;
 }
 .items-table td:last-child { border-right: none; }
 .items-table tr:last-child td { border-bottom: none; }
-.item-name { width: 42%; }
-.item-qty  { width: 12%; text-align: center; }
-.item-price{ width: 18%; }
-.item-total{ width: 18%; }
+.col-name  { width: 44%; }
+.col-qty   { width: 12%; text-align: center; }
+.col-price { width: 22%; }
+.col-total { width: 22%; }
 
-/* フッター */
+/* === フッター === */
 .slip-footer {
+  border: 1.5px solid #000;
+  border-top: none;
   display: grid;
   grid-template-columns: 1fr auto;
-  border: 1px solid #000;
-  border-top: none;
-  margin-top: 0;
 }
-.footer-note {
-  padding: 1mm 2mm;
-  font-size: 10px;
-  border-right: 1px solid #000;
-}
+.footer-empty { padding: 1mm; }
 .footer-total {
-  padding: 1mm 4mm;
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: .1em;
-  white-space: nowrap;
   display: flex;
   align-items: center;
-  gap: 8mm;
+  justify-content: center;
+  gap: 4mm;
+  padding: 3mm 6mm;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: .1em;
+  border-left: 1.5px solid #000;
+  min-height: 10mm;
 }
-.total-line {
+.total-val-line {
   border-bottom: 1px solid #000;
-  width: 25mm;
+  width: 28mm;
   display: inline-block;
 }
 
 @media print {
   .print-controls { display: none; }
-  body { margin: 0; }
+  body { background: #fff; }
   .slip {
     border: none;
     margin: 0;
-    padding: 5mm 7mm;
+    padding: 5mm 6mm;
     width: 210mm;
     min-height: 148mm;
   }
@@ -313,41 +343,44 @@ body {
 <div class="print-controls">
   <button class="btn-print" onclick="window.print()">🖨️ 印刷する</button>
   <a href="detail.php?id=<?= $id ?>" class="btn-back">← 詳細に戻る</a>
-  <span style="font-size:13px;color:#555">印刷ダイアログで用紙サイズ「A5」・向き「横」を選択してください</span>
+  <span class="hint">印刷ダイアログで用紙サイズ「A5」・向き「横」を選択してください</span>
 </div>
 
 <div class="slip">
 
-  <!-- ヘッダー -->
+  <!-- ヘッダー行 -->
   <div class="slip-header">
-    <div class="header-left">
-      <div class="garden-code">園コード</div>
-      <div class="garden-code-line"></div>
+    <div class="garden-code-area">
+      <div class="garden-code-label">園コード</div>
+      <span class="garden-code-line"></span>
     </div>
     <div class="slip-title">売上受領伝票</div>
     <div class="header-right">
-      <div class="header-right-cell">伝票NO</div>
-      <div class="header-right-cell">受　領　印</div>
-      <div class="header-right-val"></div>
-      <div class="header-right-val"></div>
+      <div class="hr-label">伝票NO</div>
+      <div class="hr-label-r">受　領　印</div>
+      <div class="hr-val"></div>
+      <div class="hr-val-r"></div>
     </div>
   </div>
 
-  <!-- 宛名 -->
-  <div class="address-area">
-    <div class="address-left">
-      <div class="garden-types">
-        幼稚園<br>保育園<br>こども園
+  <!-- 宛名行 -->
+  <div class="address-row">
+    <div class="garden-name-wrap">
+      <div class="garden-name-box"><?= htmlspecialchars($row['garden_name']) ?></div>
+      <span class="sama-l">様</span>
+    </div>
+    <div></div>
+    <div style="display:flex;align-items:flex-end;gap:1mm">
+      <div class="contact-wrap">
+        <span class="contact-label">ご担当者名</span>
+        <div class="contact-name-box"><?= htmlspecialchars($row['contact_name']) ?></div>
       </div>
-    </div>
-    <div style="display:flex;align-items:flex-end;padding-bottom:1mm">
-      <span class="garden-name-line"><?= htmlspecialchars($row['garden_name']) ?></span>
-      <span class="sama">様</span>
+      <span class="sama-r">様</span>
     </div>
   </div>
 
-  <!-- 日付・受発注 -->
-  <div class="date-order-area">
+  <!-- 日付・受発注行 -->
+  <div class="date-order-row">
     <div class="date-area">
       <span>年</span>
       <span>月</span>
@@ -356,72 +389,67 @@ body {
     <div class="order-area">
       <div class="order-row">
         <div class="order-label">受注</div>
-        <div class="order-val"><?= $order_date_short ?></div>
-        <div class="order-staff-label" style="font-size:9px">TEL・FAX<br>Mail・担当</div>
-        <div class="order-staff-val"></div>
+        <div class="order-val"><?= $order_date_reiwa ?></div>
+        <div class="order-sub-label">担当者</div>
+        <div class="order-sub-val"></div>
       </div>
       <div class="order-row">
         <div class="order-label">発注</div>
         <div class="order-val"></div>
-        <div class="order-staff-label">担当者</div>
-        <div class="order-staff-val"></div>
-      </div>
-      <div class="order-row">
-        <div class="order-label"></div>
-        <div class="order-val"></div>
-        <div class="order-staff-label">記帳</div>
-        <div class="order-staff-val"></div>
+        <div class="order-sub-label">記帳</div>
+        <div class="order-sub-val"></div>
       </div>
     </div>
   </div>
 
   <!-- 商品テーブル -->
   <div class="items-area">
-    <!-- 左列（1〜9品目） -->
     <div class="items-col">
       <table class="items-table">
         <tr>
-          <th class="item-name">品　　名</th>
-          <th class="item-qty">数量</th>
-          <th class="item-price">単価</th>
-          <th class="item-total">金額</th>
+          <th class="col-name">品　　名</th>
+          <th class="col-qty">数量</th>
+          <th class="col-price">単価</th>
+          <th class="col-total">金額</th>
         </tr>
         <?php foreach ($left_items as $item): ?>
         <tr>
-          <td class="item-name">
+          <td class="col-name">
             <?php if (!empty($item['name'])): ?>
-              <?= htmlspecialchars($item['name']) ?><br>
-              <span style="font-size:9px;color:#333"><?= htmlspecialchars($item['code'] ?? '') ?></span>
+              <?= htmlspecialchars($item['name']) ?>
+              <?php if (!empty($item['code'])): ?>
+                <br><span style="font-size:9px"><?= htmlspecialchars($item['code']) ?></span>
+              <?php endif; ?>
             <?php endif; ?>
           </td>
-          <td class="item-qty"><?= htmlspecialchars($item['qty'] ?? '') ?></td>
-          <td class="item-price"></td>
-          <td class="item-total"></td>
+          <td class="col-qty"><?= htmlspecialchars($item['qty'] ?? '') ?></td>
+          <td class="col-price"></td>
+          <td class="col-total"></td>
         </tr>
         <?php endforeach; ?>
       </table>
     </div>
-
-    <!-- 右列（10〜18品目） -->
     <div class="items-col">
       <table class="items-table">
         <tr>
-          <th class="item-name">品　　名</th>
-          <th class="item-qty">数量</th>
-          <th class="item-price">単価</th>
-          <th class="item-total">金額</th>
+          <th class="col-name">品　　名</th>
+          <th class="col-qty">数量</th>
+          <th class="col-price">単価</th>
+          <th class="col-total">金額</th>
         </tr>
         <?php foreach ($right_items as $item): ?>
         <tr>
-          <td class="item-name">
+          <td class="col-name">
             <?php if (!empty($item['name'])): ?>
-              <?= htmlspecialchars($item['name']) ?><br>
-              <span style="font-size:9px;color:#333"><?= htmlspecialchars($item['code'] ?? '') ?></span>
+              <?= htmlspecialchars($item['name']) ?>
+              <?php if (!empty($item['code'])): ?>
+                <br><span style="font-size:9px"><?= htmlspecialchars($item['code']) ?></span>
+              <?php endif; ?>
             <?php endif; ?>
           </td>
-          <td class="item-qty"><?= htmlspecialchars($item['qty'] ?? '') ?></td>
-          <td class="item-price"></td>
-          <td class="item-total"></td>
+          <td class="col-qty"><?= htmlspecialchars($item['qty'] ?? '') ?></td>
+          <td class="col-price"></td>
+          <td class="col-total"></td>
         </tr>
         <?php endforeach; ?>
       </table>
@@ -430,13 +458,12 @@ body {
 
   <!-- フッター -->
   <div class="slip-footer">
-    <div class="footer-note"></div>
+    <div class="footer-empty"></div>
     <div class="footer-total">
-      税込合計　<span class="total-line"></span>
+      税込合計　<span class="total-val-line"></span>
     </div>
   </div>
 
 </div>
-
 </body>
 </html>
