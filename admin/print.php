@@ -39,11 +39,11 @@ function to_reiwa(string $date_str): string {
 }
 $order_date_reiwa = to_reiwa($row['created_at']);
 
-// 商品を左9行・右9行に分割、空行で埋める
-$left_items  = array_slice($items, 0, 9);
-$right_items = array_slice($items, 9, 9);
-while (count($left_items)  < 9) $left_items[]  = ['name'=>'','code'=>'','qty'=>''];
-while (count($right_items) < 9) $right_items[] = ['name'=>'','code'=>'','qty'=>''];
+// 商品を左7行・右7行に分割、空行で埋める
+$left_items  = array_slice($items, 0, 7);
+$right_items = array_slice($items, 7, 7);
+while (count($left_items)  < 7) $left_items[]  = ['name'=>'','code'=>'','qty'=>''];
+while (count($right_items) < 7) $right_items[] = ['name'=>'','code'=>'','qty'=>''];
 ?>
 <!DOCTYPE html>
 <html lang="ja">
@@ -211,7 +211,7 @@ body {
   font-size: 13px;
   letter-spacing: .2em;
   border-right: 1.5px solid #000;
-  padding: 2mm 6mm;
+  padding: 2mm 6mm 2mm 20mm;
 }
 /* 受発注エリア */
 .order-area {
@@ -283,7 +283,7 @@ body {
   border-bottom: 1px solid #000;
   border-right: 1px solid #000;
   padding: 0.3mm 1mm;
-  height: 6.5mm;
+  height: 9mm;
   vertical-align: middle;
 }
 .items-table td:last-child { border-right: none; }
@@ -298,13 +298,13 @@ body {
   border: 1.5px solid #000;
   border-top: none;
   display: grid;
-  grid-template-columns: 1fr auto;
+  grid-template-columns: 1fr 44%;
 }
 .footer-note {
   padding: 2mm 3mm;
   font-size: 10px;
   border-right: 1.5px solid #000;
-  min-height: 10mm;
+  min-height: 13mm;
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
@@ -330,10 +330,8 @@ body {
   font-size: 13px;
   font-weight: 700;
   letter-spacing: .1em;
-  min-height: 10mm;
+  min-height: 13mm;
   white-space: nowrap;
-  min-width: 55mm;
-}
 }
 
 @media print {
