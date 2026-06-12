@@ -39,11 +39,9 @@ function to_reiwa(string $date_str): string {
 }
 $order_date_reiwa = to_reiwa($row['created_at']);
 
-// 商品を左7行・右7行に分割、空行で埋める
-$left_items  = array_slice($items, 0, 7);
-$right_items = array_slice($items, 7, 7);
-while (count($left_items)  < 7) $left_items[]  = ['name'=>'','code'=>'','qty'=>''];
-while (count($right_items) < 7) $right_items[] = ['name'=>'','code'=>'','qty'=>''];
+// 商品を8行に、空行で埋める
+$left_items = array_slice($items, 0, 8);
+while (count($left_items) < 8) $left_items[] = ['name'=>'','code'=>'','qty'=>''];
 ?>
 <!DOCTYPE html>
 <html lang="ja">
@@ -258,13 +256,9 @@ body {
 
 /* === 商品テーブル === */
 .items-area {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
   border: 1.5px solid #000;
   border-top: 1.5px solid #000;
 }
-.items-col { border-right: 1.5px solid #000; }
-.items-col:last-child { border-right: none; }
 .items-table {
   width: 100%;
   border-collapse: collapse;
@@ -282,16 +276,27 @@ body {
 .items-table td {
   border-bottom: 1px solid #000;
   border-right: 1px solid #000;
-  padding: 0.3mm 1mm;
+  padding: 0.3mm 1.5mm;
   height: 9mm;
   vertical-align: middle;
 }
 .items-table td:last-child { border-right: none; }
 .items-table tr:last-child td { border-bottom: none; }
-.col-name  { width: 44%; }
-.col-qty   { width: 12%; text-align: center; }
-.col-price { width: 22%; }
-.col-total { width: 22%; }
+.col-name   { width: 30%; }
+.col-code   { width: 14%; text-align: center; }
+.col-qty    { width: 8%;  text-align: center; }
+.col-price  { width: 14%; }
+.col-total  { width: 14%; }
+.col-備考   { width: 20%; }
+.item-name-text {
+  font-size: 12px;
+  font-weight: 700;
+  display: block;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
 
 /* === フッター === */
 .slip-footer {
@@ -419,56 +424,28 @@ body {
 
   <!-- 商品テーブル -->
   <div class="items-area">
-    <div class="items-col">
-      <table class="items-table">
-        <tr>
-          <th class="col-name">品　　名</th>
-          <th class="col-qty">数量</th>
-          <th class="col-price">単価</th>
-          <th class="col-total">金額</th>
-        </tr>
-        <?php foreach ($left_items as $item): ?>
-        <tr>
-          <td class="col-name">
-            <?php if (!empty($item['name'])): ?>
-              <?= htmlspecialchars($item['name']) ?>
-              <?php if (!empty($item['code'])): ?>
-                <br><span style="font-size:9px"><?= htmlspecialchars($item['code']) ?></span>
-              <?php endif; ?>
-            <?php endif; ?>
-          </td>
-          <td class="col-qty"><?= htmlspecialchars($item['qty'] ?? '') ?></td>
-          <td class="col-price"></td>
-          <td class="col-total"></td>
-        </tr>
-        <?php endforeach; ?>
-      </table>
-    </div>
-    <div class="items-col">
-      <table class="items-table">
-        <tr>
-          <th class="col-name">品　　名</th>
-          <th class="col-qty">数量</th>
-          <th class="col-price">単価</th>
-          <th class="col-total">金額</th>
-        </tr>
-        <?php foreach ($right_items as $item): ?>
-        <tr>
-          <td class="col-name">
-            <?php if (!empty($item['name'])): ?>
-              <?= htmlspecialchars($item['name']) ?>
-              <?php if (!empty($item['code'])): ?>
-                <br><span style="font-size:9px"><?= htmlspecialchars($item['code']) ?></span>
-              <?php endif; ?>
-            <?php endif; ?>
-          </td>
-          <td class="col-qty"><?= htmlspecialchars($item['qty'] ?? '') ?></td>
-          <td class="col-price"></td>
-          <td class="col-total"></td>
-        </tr>
-        <?php endforeach; ?>
-      </table>
-    </div>
+    <table class="items-table">
+      <tr>
+        <th class="col-name">品　　名</th>
+        <th class="col-code">商品番号</th>
+        <th class="col-qty">数量</th>
+        <th class="col-price">単価</th>
+        <th class="col-total">金額</th>
+        <th class="col-備考">備　　考</th>
+      </tr>
+      <?php foreach ($left_items as $item): ?>
+      <tr>
+        <td class="col-name">
+          <span class="item-name-text"><?= htmlspecialchars($item['name'] ?? '') ?></span>
+        </td>
+        <td class="col-code" style="text-align:center;font-size:10px"><?= htmlspecialchars($item['code'] ?? '') ?></td>
+        <td class="col-qty"><?= htmlspecialchars($item['qty'] ?? '') ?></td>
+        <td class="col-price"></td>
+        <td class="col-total"></td>
+        <td class="col-備考"></td>
+      </tr>
+      <?php endforeach; ?>
+    </table>
   </div>
 
   <!-- フッター -->
