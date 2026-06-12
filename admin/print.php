@@ -167,18 +167,17 @@ body {
   gap: 1mm;
 }
 .garden-name-box {
-  border: 1.5px solid #000;
   height: 10mm;
   width: 48mm;
   display: flex;
   align-items: center;
-  padding: 0 2mm;
-  font-size: 12px;
+  padding: 0 1mm;
+  font-size: 18px;
   font-weight: 700;
   overflow: hidden;
   white-space: nowrap;
 }
-.sama-l { font-size: 12px; }
+.sama-l { font-size: 14px; }
 .contact-wrap {
   display: flex;
   flex-direction: column;
@@ -187,33 +186,32 @@ body {
 }
 .contact-label { font-size: 9px; color: #333; }
 .contact-name-box {
-  border: 1.5px solid #000;
   height: 8mm;
   width: 32mm;
   display: flex;
   align-items: center;
-  padding: 0 2mm;
-  font-size: 11px;
+  padding: 0 1mm;
+  font-size: 13px;
   font-weight: 700;
 }
-.sama-r { font-size: 12px; margin-left: 1mm; align-self: flex-end; }
+.sama-r { font-size: 13px; margin-left: 1mm; align-self: flex-end; }
 
 /* === 日付・受発注行 === */
 .date-order-row {
   display: grid;
-  grid-template-columns: 1fr 70mm;
+  grid-template-columns: 1fr 80mm;
   border: 1.5px solid #000;
   margin-bottom: 0;
 }
 .date-area {
   display: flex;
   align-items: center;
-  justify-content: center;
-  gap: 6mm;
+  justify-content: flex-start;
+  gap: 8mm;
   font-size: 13px;
   letter-spacing: .2em;
   border-right: 1.5px solid #000;
-  padding: 2mm;
+  padding: 2mm 6mm;
 }
 /* 受発注エリア */
 .order-area {
@@ -222,9 +220,9 @@ body {
 }
 .order-row {
   display: grid;
-  grid-template-columns: 12mm 1fr 18mm 20mm;
+  grid-template-columns: 12mm 1fr 18mm 22mm;
   border-bottom: 1.5px solid #000;
-  min-height: 7mm;
+  min-height: 8mm;
 }
 .order-row:last-child { border-bottom: none; }
 .order-label {
@@ -302,23 +300,34 @@ body {
   display: grid;
   grid-template-columns: 1fr auto;
 }
-.footer-empty { padding: 1mm; }
+.footer-note {
+  padding: 2mm 3mm;
+  font-size: 10px;
+  border-right: 1.5px solid #000;
+  min-height: 10mm;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+}
+.footer-note-label {
+  font-size: 9px;
+  color: #555;
+  margin-bottom: 1mm;
+}
+.footer-note-text {
+  font-size: 10px;
+  line-height: 1.6;
+}
 .footer-total {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 4mm;
   padding: 3mm 6mm;
   font-size: 13px;
   font-weight: 700;
   letter-spacing: .1em;
-  border-left: 1.5px solid #000;
   min-height: 10mm;
-}
-.total-val-line {
-  border-bottom: 1px solid #000;
-  width: 28mm;
-  display: inline-block;
+  white-space: nowrap;
 }
 
 @media print {
@@ -458,10 +467,13 @@ body {
 
   <!-- フッター -->
   <div class="slip-footer">
-    <div class="footer-empty"></div>
-    <div class="footer-total">
-      税込合計　<span class="total-val-line"></span>
+    <div class="footer-note">
+      <?php if (!empty($row['note'])): ?>
+        <span class="footer-note-label">備考</span>
+        <span class="footer-note-text"><?= nl2br(htmlspecialchars($row['note'])) ?></span>
+      <?php endif; ?>
     </div>
+    <div class="footer-total">税込合計</div>
   </div>
 
 </div>
