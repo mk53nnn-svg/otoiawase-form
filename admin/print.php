@@ -332,6 +332,7 @@ body {
   letter-spacing: .1em;
   min-height: 10mm;
   white-space: nowrap;
+  min-width: 55mm;
 }
 }
 
