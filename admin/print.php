@@ -345,34 +345,21 @@ body {
   .slip {
     border: none !important;
     margin: 0 !important;
-    padding: 4mm 5mm !important;
-    width: 210mm !important;
-    height: 148mm !important;
-    overflow: hidden;
+    padding: 3mm 4mm !important;
+    width: 200mm !important;
+    transform: scale(0.96);
+    transform-origin: top left;
     page-break-after: avoid;
   }
   * {
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
   }
-  .header-right,
-  .hr-label,
-  .hr-label-r,
-  .hr-val,
-  .hr-val-r,
-  .items-area,
-  .items-table,
-  .items-table th,
-  .items-table td,
-  .slip-footer,
-  .footer-note,
-  .date-order-row,
-  .order-row,
-  .order-label,
-  .order-val,
-  .order-sub-label {
-    border-color: #000 !important;
+  @page {
+    size: A5 landscape;
+    margin: 0;
   }
+}
   @page {
     size: A5 landscape;
     margin: 0;
