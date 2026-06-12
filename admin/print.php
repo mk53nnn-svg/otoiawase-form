@@ -282,8 +282,8 @@ body {
 .items-table td {
   border-bottom: 1px solid #000;
   border-right: 1px solid #000;
-  padding: 0.5mm 1mm;
-  height: 7.5mm;
+  padding: 0.3mm 1mm;
+  height: 6.5mm;
   vertical-align: middle;
 }
 .items-table td:last-child { border-right: none; }
@@ -337,14 +337,16 @@ body {
 }
 
 @media print {
-  .print-controls { display: none; }
-  body { background: #fff; }
+  .print-controls { display: none !important; }
+  html, body { margin: 0; padding: 0; background: #fff; }
   .slip {
-    border: none;
-    margin: 0;
-    padding: 5mm 6mm;
-    width: 210mm;
-    min-height: 148mm;
+    border: none !important;
+    margin: 0 !important;
+    padding: 4mm 5mm !important;
+    width: 210mm !important;
+    height: 148mm !important;
+    overflow: hidden;
+    page-break-after: avoid;
   }
   @page {
     size: A5 landscape;
