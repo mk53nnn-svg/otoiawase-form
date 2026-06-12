@@ -438,8 +438,8 @@ body {
         <td class="col-name">
           <span class="item-name-text"><?= htmlspecialchars($item['name'] ?? '') ?></span>
         </td>
-        <td class="col-code" style="text-align:center;font-size:10px"><?= htmlspecialchars($item['code'] ?? '') ?></td>
-        <td class="col-qty"><?= htmlspecialchars($item['qty'] ?? '') ?></td>
+        <td class="col-code" style="text-align:center;font-size:13px;font-weight:700"><?= htmlspecialchars($item['code'] ?? '') ?></td>
+        <td class="col-qty" style="text-align:center;font-size:13px;font-weight:700"><?= htmlspecialchars($item['qty'] ?? '') ?></td>
         <td class="col-price"></td>
         <td class="col-total"></td>
         <td class="col-備考"></td>
