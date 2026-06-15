@@ -90,12 +90,14 @@ body {
 
 /* 伝票本体 */
 .slip {
-  width: 206mm;
-  min-height: 144mm;
-  padding: 5mm 6mm;
+  width: 210mm;
+  height: 148mm;
+  padding: 4mm 5mm;
   margin: 8px auto;
   background: #fff;
   border: 1px solid #aaa;
+  box-sizing: border-box;
+  overflow: hidden;
 }
 
 /* === ヘッダー行 === */
@@ -341,13 +343,20 @@ body {
 
 @media print {
   .print-controls { display: none !important; }
-  html, body { margin: 0; padding: 0; background: #fff; }
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: #fff;
+    width: 210mm;
+    height: 148mm;
+  }
   .slip {
     border: none !important;
     margin: 0 !important;
-    padding: 4mm 5mm !important;
+    padding: 3mm 4mm !important;
     width: 210mm !important;
-    page-break-after: avoid;
+    height: 148mm !important;
+    box-sizing: border-box;
   }
   * {
     -webkit-print-color-adjust: exact !important;
