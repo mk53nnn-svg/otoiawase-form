@@ -350,11 +350,13 @@ body {
   }
   .slip {
     border: none !important;
-    margin: 0 !important;
-    padding: 3mm 4mm !important;
-    width: 200mm !important;
-    height: 140mm !important;
+    margin: 0 auto !important;
+    padding: 4mm 5mm !important;
+    width: 210mm !important;
+    height: 148mm !important;
     box-sizing: border-box;
+    transform: scale(0.94);
+    transform-origin: center center;
   }
   * {
     -webkit-print-color-adjust: exact !important;
