@@ -117,7 +117,7 @@ body {
 }
 .slip-title {
   text-align: center;
-  font-size: 16px;
+  font-size: 32px;
   font-weight: 700;
   letter-spacing: .15em;
   padding-top: 1mm;
