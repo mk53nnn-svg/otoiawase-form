@@ -186,6 +186,11 @@ header h1{font-size:17px;font-weight:700}
 .wrap{max-width:980px;margin:auto;padding:24px 16px}
 .card{background:#fff;border-radius:10px;padding:24px 28px;box-shadow:0 2px 10px rgba(0,0,0,.06);margin-bottom:18px}
 .card-title{font-size:16px;font-weight:700;color:#0d47a1;padding-bottom:12px;border-bottom:2px solid #e8eef8;margin-bottom:18px}
+.card-title-row{display:flex;align-items:center;justify-content:space-between;padding-bottom:12px;border-bottom:2px solid #e8eef8;margin-bottom:18px}
+.print-btn{display:flex;align-items:center;gap:8px;background:#0d47a1;color:#fff;border:none;padding:8px 16px;border-radius:8px;font-size:13px;font-weight:700;text-decoration:none;cursor:pointer}
+.print-btn:hover{background:#0a3580}
+.printed-badge{background:rgba(255,255,255,.25);padding:3px 8px;border-radius:12px;font-size:11px}
+.not-printed-badge{background:rgba(255,255,255,.25);padding:3px 8px;border-radius:12px;font-size:11px}
 .top-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:18px}
 @media(max-width:700px){.top-grid{grid-template-columns:1fr}}
 .top-grid .card{margin-bottom:0}
@@ -228,7 +233,6 @@ textarea{min-height:120px;resize:vertical}
 <header>
   <h1>問い合わせ詳細</h1>
   <div class="header-links">
-    <a href="print.php?id=<?= $id ?>" class="back" target="_blank">🖨️ 伝票印刷</a>
     <a href="dashboard.php" class="back">← 一覧に戻る</a>
     <a href="logout.php" class="logout">ログアウト</a>
   </div>
@@ -285,7 +289,17 @@ textarea{min-height:120px;resize:vertical}
 
   <!-- 問い合わせ内容 -->
   <div class="card">
-    <div class="card-title">問い合わせ内容</div>
+    <div class="card-title-row">
+      <div class="card-title" style="border:none;margin:0;padding:0">問い合わせ内容</div>
+      <a href="print.php?id=<?= $id ?>" class="print-btn" target="_blank" onclick="setTimeout(()=>location.reload(), 3000)">
+        🖨️ 伝票印刷
+        <?php if (!empty($row['printed_at'])): ?>
+          <span class="printed-badge" title="<?= date('Y/m/d H:i', strtotime($row['printed_at'])) ?> 印刷済み">✅ 印刷済</span>
+        <?php else: ?>
+          <span class="not-printed-badge">未印刷</span>
+        <?php endif; ?>
+      </a>
+    </div>
     <?php if (!empty($items) && $row['type'] !== '納期確認'): ?>
       <table class="items-table">
         <tr><th>商品名</th><th>商品コード</th><th>数量</th></tr>
