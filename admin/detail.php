@@ -340,7 +340,8 @@ textarea{min-height:120px;resize:vertical}
         <span class="info-label">添付写真</span>
         <span class="info-value">
           <img src="../uploads/<?= htmlspecialchars($row['repair_image']) ?>"
-               style="max-width:300px;border-radius:8px;border:1px solid #ddd">
+               style="max-width:300px;border-radius:8px;border:1px solid #ddd;display:block;margin-bottom:8px">
+          <a href="../uploads/<?= htmlspecialchars($row['repair_image']) ?>" download class="copy-btn" style="display:inline-block;text-decoration:none">⬇ 画像をダウンロード</a>
         </span>
       </div>
     <?php endif; ?>
