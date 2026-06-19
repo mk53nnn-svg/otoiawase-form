@@ -20,6 +20,13 @@ try {
 $id = (int)($_GET['id'] ?? 0);
 if (!$id) { header('Location: dashboard.php'); exit; }
 
+// 印刷済みマーク（印刷ボタン押下時にAjaxで呼ばれる）
+if (isset($_GET['mark_printed'])) {
+    $pdo->prepare('UPDATE inquiries SET printed_at = NOW() WHERE id = :id')->execute([':id' => $id]);
+    echo 'ok';
+    exit;
+}
+
 $stmt = $pdo->prepare('SELECT * FROM inquiries WHERE id = :id');
 $stmt->execute([':id' => $id]);
 $row = $stmt->fetch();
@@ -482,6 +489,8 @@ function doPrint() {
   ctrl.style.display = 'none';
   window.print();
   ctrl.style.display = '';
+  // 印刷済みマークを記録
+  fetch('print.php?id=<?= $id ?>&mark_printed=1');
 }
 </script>
 </body>
