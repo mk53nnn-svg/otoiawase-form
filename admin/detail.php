@@ -291,6 +291,7 @@ textarea{min-height:120px;resize:vertical}
   <div class="card">
     <div class="card-title-row">
       <div class="card-title" style="border:none;margin:0;padding:0">問い合わせ内容</div>
+      <?php if ($row['type'] === '通常発注'): ?>
       <a href="print.php?id=<?= $id ?>" class="print-btn" target="_blank" onclick="setTimeout(()=>location.reload(), 3000)">
         🖨️ 伝票印刷
         <?php if (!empty($row['printed_at'])): ?>
@@ -299,6 +300,7 @@ textarea{min-height:120px;resize:vertical}
           <span class="not-printed-badge">未印刷</span>
         <?php endif; ?>
       </a>
+      <?php endif; ?>
     </div>
     <?php if (!empty($items) && $row['type'] !== '納期確認'): ?>
       <table class="items-table">
