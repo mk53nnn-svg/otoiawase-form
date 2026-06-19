@@ -347,15 +347,13 @@ body {
     margin: 0;
     padding: 0;
     background: #fff;
-    width: 210mm;
-    height: 148mm;
   }
   .slip {
     border: none !important;
     margin: 0 !important;
     padding: 3mm 4mm !important;
-    width: 210mm !important;
-    height: 148mm !important;
+    width: 200mm !important;
+    height: 140mm !important;
     box-sizing: border-box;
   }
   * {
